@@ -139,7 +139,7 @@ venv.bak/
 /site
 
 sweep.db
-sweep_results.csv
+sweep_results*.csv
 *.gif
 
 # mypy

@@ -3,7 +3,7 @@ Improvements over solution.ipynb
 
 1. Fixed the missing parts of the notebook
 2. Added more operator nodes to the possibilities
-3. Increased max gens to 50
+3. Increased max gens to 50 
 4. Hyperparameter sweep using Optuna (TPE) over pop_size, max_tree_size,
    num_constants, coeff_lr, coeff_opt_steps and gamma
 

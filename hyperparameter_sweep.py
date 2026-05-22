@@ -5,6 +5,7 @@ import csv
 import os
 import random
 from collections import namedtuple, deque
+from datetime import datetime
 
 import gymnasium as gym
 import numpy as np
@@ -129,7 +130,7 @@ def run_trial(pop_size, max_tree_size, num_constants, coeff_lr, coeff_opt_steps,
     return np.sum(rewards), best
 
 
-def objective(trial):
+def objective(trial, results_file=sweep_config.RESULTS_FILE):
     print(f"Trial {trial.number + 1}/{sweep_config.N_TRIALS} starting...")
     pop_size = trial.suggest_categorical("pop_size", sweep_config.POP_SIZE_OPTIONS)
     max_tree_size = trial.suggest_categorical("max_tree_size", sweep_config.MAX_TREE_SIZE_OPTIONS)
@@ -149,8 +150,8 @@ def objective(trial):
     print(f"Trial {trial.number + 1}/{sweep_config.N_TRIALS} | score: {score:.1f} | best so far: {best_so_far:.1f}")
     print(f"  pop={pop_size}, tree_size={max_tree_size}, constants={num_constants}, lr={coeff_lr:.5f}, opt_steps={coeff_opt_steps}, gamma={gamma:.4f}")
 
-    write_header = not os.path.exists(sweep_config.RESULTS_FILE)
-    with open(sweep_config.RESULTS_FILE, "a", newline="") as f:
+    write_header = not os.path.exists(results_file)
+    with open(results_file, "a", newline="") as f:
         writer = csv.writer(f)
         if write_header:
             writer.writerow(["trial", "score", "pop_size", "max_tree_size",
@@ -165,6 +166,9 @@ if __name__ == "__main__":
     if not sweep_config.RESUME and os.path.exists(sweep_config.DB_FILE):
         os.remove(sweep_config.DB_FILE)
 
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    results_file = f"sweep_results_{timestamp}.csv" if not sweep_config.RESUME else sweep_config.RESULTS_FILE
+
     study = optuna.create_study(
         study_name=sweep_config.STUDY_NAME,
         storage=f"sqlite:///{sweep_config.DB_FILE}",
@@ -175,7 +179,7 @@ if __name__ == "__main__":
     completed = len(study.trials)
     remaining = max(0, sweep_config.N_TRIALS - completed)
     print(f"Resuming from trial {completed + 1}, {remaining} trials remaining.")
-    study.optimize(objective, n_trials=remaining)
+    study.optimize(lambda trial: objective(trial, results_file), n_trials=remaining)
 
     best = study.best_params
     print("\nBest params found:", best)
