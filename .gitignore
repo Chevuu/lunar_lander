@@ -138,6 +138,10 @@ venv.bak/
 # mkdocs documentation
 /site
 
+sweep.db
+sweep_results.csv
+*.gif
+
 # mypy
 .mypy_cache/
 .dmypy.json
