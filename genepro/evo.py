@@ -215,6 +215,12 @@ class Evolution:
       offspring_population[i].fitness = fitnesses[i]
     # store cost
     self.num_evals += self.pop_size
+    # elitism: replace the worst offspring with the all-time best
+    if self.best_of_gens:
+      all_time_best = max(self.best_of_gens, key=lambda t: t.fitness)
+      worst_idx = int(np.argmin([t.fitness for t in offspring_population]))
+      offspring_population[worst_idx] = deepcopy(all_time_best)
+
     # update the population for the next iteration
     self.population = offspring_population
     # update info

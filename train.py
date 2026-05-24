@@ -1,20 +1,20 @@
+import argparse
+import copy
+import random
+from collections import namedtuple, deque
+
 import gymnasium as gym
+import numpy as np
+import torch
+import torch.optim as optim
 
 from genepro.node_impl import Feature, Constant
 from genepro.evo import Evolution
 
-import torch
-import torch.optim as optim
-
-import random
-import copy
-from collections import namedtuple, deque
-
-import numpy as np
-
 import config
 
 env = gym.make("LunarLander-v2", render_mode="rgb_array")
+num_features = env.observation_space.shape[0]
 
 Transition = namedtuple('Transition', ('state', 'action', 'next_state', 'reward'))
 
@@ -61,55 +61,6 @@ def fitness_function_pt(multitree, num_episodes=config.NUM_EPISODES, episode_dur
     return np.sum(rewards), memory
 
 
-num_features = env.observation_space.shape[0]
-leaf_nodes = [Feature(i) for i in range(num_features)]
-leaf_nodes += [Constant() for _ in range(config.NUM_CONSTANTS)]
-
-evo = Evolution(
-    fitness_function_pt, config.INTERNAL_NODES, leaf_nodes,
-    config.NUM_TREES,
-    pop_size=config.POP_SIZE,
-    max_gens=config.MAX_GENS,
-    max_tree_size=config.MAX_TREE_SIZE,
-    n_jobs=config.N_JOBS,
-    verbose=config.VERBOSE,
-)
-
-evo.evolve()
-
-best = evo.best_of_gens[-1]
-constants = best.get_subtrees_consts()
-
-if len(constants) > 0 and len(evo.memory) > config.BATCH_SIZE:
-    optimizer = optim.AdamW(constants, lr=config.COEFF_LR, amsgrad=True)
-    for _ in range(config.COEFF_OPT_STEPS):
-        if len(evo.memory) > config.BATCH_SIZE:
-            target_tree = copy.deepcopy(best)
-            transitions = evo.memory.sample(config.BATCH_SIZE)
-            batch_data = Transition(*zip(*transitions))
-
-            non_final_mask = torch.tensor(
-                tuple(map(lambda s: s is not None, batch_data.next_state)), dtype=torch.bool
-            )
-            non_final_next_states = torch.cat([s for s in batch_data.next_state if s is not None])
-            state_batch = torch.cat(batch_data.state)
-            action_batch = torch.cat(batch_data.action)
-            reward_batch = torch.cat(batch_data.reward)
-
-            state_action_values = best.get_output_pt(state_batch).gather(1, action_batch)
-            next_state_values = torch.zeros(config.BATCH_SIZE, dtype=torch.float)
-            with torch.no_grad():
-                next_state_values[non_final_mask] = target_tree.get_output_pt(non_final_next_states).max(1)[0].float()
-
-            expected_state_action_values = (next_state_values * config.GAMMA) + reward_batch
-            loss = torch.nn.SmoothL1Loss()(state_action_values, expected_state_action_values.unsqueeze(1))
-
-            optimizer.zero_grad()
-            loss.backward()
-            torch.nn.utils.clip_grad_value_(constants, config.GRAD_CLIP)
-            optimizer.step()
-
-
 def get_test_score(tree):
     rewards = []
     for i in range(config.TEST_EPISODES):
@@ -124,7 +75,75 @@ def get_test_score(tree):
     return np.sum(rewards)
 
 
-print(best.get_readable_repr())
-print(f"Test score: {get_test_score(best)}")
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Train a GP lunar lander agent")
+    parser.add_argument("--pop-size",        type=int,   default=config.POP_SIZE)
+    parser.add_argument("--max-gens",        type=int,   default=config.MAX_GENS)
+    parser.add_argument("--max-tree-size",   type=int,   default=config.MAX_TREE_SIZE)
+    parser.add_argument("--num-constants",   type=int,   default=config.NUM_CONSTANTS)
+    parser.add_argument("--coeff-lr",        type=float, default=config.COEFF_LR)
+    parser.add_argument("--coeff-opt-steps", type=int,   default=config.COEFF_OPT_STEPS)
+    parser.add_argument("--gamma",           type=float, default=config.GAMMA)
+    parser.add_argument("--n-jobs",          type=int,   default=config.N_JOBS)
+    args = parser.parse_args()
 
-env.close()
+    config.POP_SIZE        = args.pop_size
+    config.MAX_GENS        = args.max_gens
+    config.MAX_TREE_SIZE   = args.max_tree_size
+    config.NUM_CONSTANTS   = args.num_constants
+    config.COEFF_LR        = args.coeff_lr
+    config.COEFF_OPT_STEPS = args.coeff_opt_steps
+    config.GAMMA           = args.gamma
+    config.N_JOBS          = args.n_jobs
+
+    leaf_nodes = [Feature(i) for i in range(num_features)]
+    leaf_nodes += [Constant() for _ in range(config.NUM_CONSTANTS)]
+
+    evo = Evolution(
+        fitness_function_pt, config.INTERNAL_NODES, leaf_nodes,
+        config.NUM_TREES,
+        pop_size=config.POP_SIZE,
+        max_gens=config.MAX_GENS,
+        max_tree_size=config.MAX_TREE_SIZE,
+        n_jobs=config.N_JOBS,
+        verbose=config.VERBOSE,
+    )
+
+    evo.evolve()
+
+    best = max(evo.best_of_gens, key=lambda t: t.fitness)
+    constants = best.get_subtrees_consts()
+
+    if len(constants) > 0 and len(evo.memory) > config.BATCH_SIZE:
+        optimizer = optim.AdamW(constants, lr=config.COEFF_LR, amsgrad=True)
+        for _ in range(config.COEFF_OPT_STEPS):
+            if len(evo.memory) > config.BATCH_SIZE:
+                target_tree = copy.deepcopy(best)
+                transitions = evo.memory.sample(config.BATCH_SIZE)
+                batch_data = Transition(*zip(*transitions))
+
+                non_final_mask = torch.tensor(
+                    tuple(map(lambda s: s is not None, batch_data.next_state)), dtype=torch.bool
+                )
+                non_final_next_states = torch.cat([s for s in batch_data.next_state if s is not None])
+                state_batch = torch.cat(batch_data.state)
+                action_batch = torch.cat(batch_data.action)
+                reward_batch = torch.cat(batch_data.reward)
+
+                state_action_values = best.get_output_pt(state_batch).gather(1, action_batch)
+                next_state_values = torch.zeros(config.BATCH_SIZE, dtype=torch.float)
+                with torch.no_grad():
+                    next_state_values[non_final_mask] = target_tree.get_output_pt(non_final_next_states).max(1)[0].float()
+
+                expected_state_action_values = (next_state_values * config.GAMMA) + reward_batch
+                loss = torch.nn.SmoothL1Loss()(state_action_values, expected_state_action_values.unsqueeze(1))
+
+                optimizer.zero_grad()
+                loss.backward()
+                torch.nn.utils.clip_grad_value_(constants, config.GRAD_CLIP)
+                optimizer.step()
+
+    print(best.get_readable_repr())
+    print(f"Test score: {get_test_score(best)}")
+
+    env.close()

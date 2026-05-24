@@ -1,80 +1,40 @@
 # pip install optuna
-import optuna
+import argparse
 import copy
 import csv
 import os
-import random
-from collections import namedtuple, deque
 from datetime import datetime
 
-import gymnasium as gym
 import numpy as np
+import optuna
 import torch
 import torch.optim as optim
 
-from genepro.node_impl import Feature, Constant, Plus, Minus, Times, Div, Sin, Cos, Exp, Log, Sqrt
+from genepro.node_impl import Feature, Constant
 from genepro.evo import Evolution
 
 import config
 import sweep_config
-
-env = gym.make("LunarLander-v2", render_mode="rgb_array")
-num_features = env.observation_space.shape[0]
-
-Transition = namedtuple('Transition', ('state', 'action', 'next_state', 'reward'))
-
-
-class ReplayMemory(object):
-    def __init__(self, capacity):
-        self.memory = deque([], maxlen=capacity)
-
-    def push(self, *args):
-        self.memory.append(Transition(*args))
-
-    def sample(self, batch_size):
-        return random.sample(self.memory, batch_size)
-
-    def __len__(self):
-        return len(self.memory)
-
-    def __iadd__(self, other):
-        self.memory += other.memory
-        return self
-
-    def __add__(self, other):
-        self.memory = self.memory + other.memory
-        return self
+from train import env, num_features, Transition, ReplayMemory, fitness_function_pt, get_test_score
 
 
 def make_fitness_fn(num_episodes, episode_duration):
-    def fitness_function_pt(multitree, num_episodes=num_episodes, episode_duration=episode_duration, render=False, ignore_done=False):
-        memory = ReplayMemory(config.REPLAY_MEMORY_SIZE)
-        rewards = []
-        for _ in range(num_episodes):
-            observation = env.reset()[0]
-            for _ in range(episode_duration):
-                input_sample = torch.from_numpy(observation.reshape((1, -1))).float()
-                action = torch.argmax(multitree.get_output_pt(input_sample))
-                observation, reward, terminated, truncated, _ = env.step(action.item())
-                rewards.append(reward)
-                output_sample = torch.from_numpy(observation.reshape((1, -1))).float()
-                memory.push(input_sample, torch.tensor([[action.item()]]), output_sample, torch.tensor([reward]))
-                if (terminated or truncated) and not ignore_done:
-                    break
-        return np.sum(rewards), memory
-    return fitness_function_pt
+    def fn(multitree, render=False, ignore_done=False):
+        return fitness_function_pt(multitree, num_episodes=num_episodes,
+                                   episode_duration=episode_duration,
+                                   render=render, ignore_done=ignore_done)
+    return fn
 
 
 def run_trial(pop_size, max_tree_size, num_constants, coeff_lr, coeff_opt_steps, gamma,
               max_gens, num_episodes):
     leaf_nodes = [Feature(i) for i in range(num_features)]
     leaf_nodes += [Constant() for _ in range(num_constants)]
-    internal_nodes = [Plus(), Minus(), Times(), Div(), Sin(), Cos(), Exp(), Log(), Sqrt()]
 
     fitness_fn = make_fitness_fn(num_episodes, config.EPISODE_DURATION)
 
     evo = Evolution(
-        fitness_fn, internal_nodes, leaf_nodes,
+        fitness_fn, config.INTERNAL_NODES, leaf_nodes,
         config.NUM_TREES,
         pop_size=pop_size,
         max_gens=max_gens,
@@ -84,7 +44,7 @@ def run_trial(pop_size, max_tree_size, num_constants, coeff_lr, coeff_opt_steps,
     )
     evo.evolve()
 
-    best = evo.best_of_gens[-1]
+    best = max(evo.best_of_gens, key=lambda t: t.fitness)
     constants = best.get_subtrees_consts()
 
     if len(constants) > 0 and len(evo.memory) > config.BATCH_SIZE:
@@ -115,29 +75,17 @@ def run_trial(pop_size, max_tree_size, num_constants, coeff_lr, coeff_opt_steps,
                 torch.nn.utils.clip_grad_value_(constants, config.GRAD_CLIP)
                 optimizer.step()
 
-    # fixed seeds so every trial is scored on the same episodes
-    rewards = []
-    for i in range(config.TEST_EPISODES):
-        observation = env.reset(seed=i)[0]
-        for _ in range(config.TEST_EPISODE_DURATION):
-            input_sample = torch.from_numpy(observation.reshape((1, -1))).float()
-            action = torch.argmax(best.get_output_pt(input_sample))
-            observation, reward, terminated, truncated, _ = env.step(action.item())
-            rewards.append(reward)
-            if terminated or truncated:
-                break
-
-    return np.sum(rewards), best
+    return get_test_score(best), best
 
 
 def objective(trial, results_file=sweep_config.RESULTS_FILE):
     print(f"Trial {trial.number + 1}/{sweep_config.N_TRIALS} starting...")
-    pop_size = trial.suggest_categorical("pop_size", sweep_config.POP_SIZE_OPTIONS)
-    max_tree_size = trial.suggest_categorical("max_tree_size", sweep_config.MAX_TREE_SIZE_OPTIONS)
-    num_constants = trial.suggest_int("num_constants", sweep_config.NUM_CONSTANTS_MIN, sweep_config.NUM_CONSTANTS_MAX)
-    coeff_lr = trial.suggest_float("coeff_lr", sweep_config.COEFF_LR_MIN, sweep_config.COEFF_LR_MAX, log=True)
+    pop_size        = trial.suggest_categorical("pop_size", sweep_config.POP_SIZE_OPTIONS)
+    max_tree_size   = trial.suggest_categorical("max_tree_size", sweep_config.MAX_TREE_SIZE_OPTIONS)
+    num_constants   = trial.suggest_int("num_constants", sweep_config.NUM_CONSTANTS_MIN, sweep_config.NUM_CONSTANTS_MAX)
+    coeff_lr        = trial.suggest_float("coeff_lr", sweep_config.COEFF_LR_MIN, sweep_config.COEFF_LR_MAX, log=True)
     coeff_opt_steps = trial.suggest_categorical("coeff_opt_steps", sweep_config.COEFF_OPT_STEPS_OPTIONS)
-    gamma = trial.suggest_float("gamma", sweep_config.GAMMA_MIN, sweep_config.GAMMA_MAX)
+    gamma           = trial.suggest_float("gamma", sweep_config.GAMMA_MIN, sweep_config.GAMMA_MAX)
 
     score, _ = run_trial(
         pop_size, max_tree_size, num_constants, coeff_lr, coeff_opt_steps, gamma,
@@ -163,6 +111,21 @@ def objective(trial, results_file=sweep_config.RESULTS_FILE):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Hyperparameter sweep for GP lunar lander")
+    parser.add_argument("--n-trials",       type=int,  default=sweep_config.N_TRIALS)
+    parser.add_argument("--sweep-gens",     type=int,  default=sweep_config.SWEEP_GENS)
+    parser.add_argument("--sweep-episodes", type=int,  default=sweep_config.SWEEP_EPISODES)
+    parser.add_argument("--n-jobs",         type=int,  default=config.N_JOBS)
+    parser.add_argument("--resume",         action="store_true",  default=sweep_config.RESUME)
+    parser.add_argument("--no-resume",      action="store_false", dest="resume")
+    args = parser.parse_args()
+
+    sweep_config.N_TRIALS       = args.n_trials
+    sweep_config.SWEEP_GENS     = args.sweep_gens
+    sweep_config.SWEEP_EPISODES = args.sweep_episodes
+    sweep_config.RESUME         = args.resume
+    config.N_JOBS               = args.n_jobs
+
     if not sweep_config.RESUME and os.path.exists(sweep_config.DB_FILE):
         os.remove(sweep_config.DB_FILE)
 

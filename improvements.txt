@@ -8,4 +8,29 @@ Improvements over solution.ipynb
    num_constants, coeff_lr, coeff_opt_steps and gamma
 
 
+HP Sweep Conclusions
+=================================
+Ran 55 Optuna TPE trials sweeping pop_size, max_tree_size, num_constants,
+coeff_lr, coeff_opt_steps and gamma. Best score: 639.3 (trial 19).
+
+Key findings:
+- Large pop_size (128) and large max_tree_size (63) correlate with better scores;
+  small populations (16) almost always converge to the degenerate -1391 attractor.
+- ~50% of trials collapsed to score -1391.95 regardless of settings. Root causes:
+    (a) Exp() overflow produces NaN outputs -> argmax always returns action 0
+    (b) "do nothing" is a local fitness optimum vs. random-firing trees (no fuel cost)
+    (c) No elitism + noisy fitness (8 episodes) means good solutions are not reliably
+        preserved or distinguished from bad ones.
+- Best config: pop=128, tree_size=63, constants=2, lr=1.69e-4, opt_steps=250,
+  gamma=0.98. These are now the defaults in config.py.
+
+TODOS
+=================================
+1. Add elitism
+2. Fix exp() causing insane values leading to the lander choosing to do nothing
+3. change fitness policy?
+4. Add nice logging code that keeps track of what happened in a run, hp and keeps a video of best performer
+
+
+
 
