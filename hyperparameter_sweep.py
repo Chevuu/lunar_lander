@@ -15,14 +15,15 @@ from genepro.evo import Evolution
 
 import config
 import sweep_config
-from train import env, num_features, Transition, ReplayMemory, fitness_function_pt, get_test_score
+from train import env, num_features, Transition, ReplayMemory, fitness_function_pt, get_test_score, set_seed
 
 
 def make_fitness_fn(num_episodes, episode_duration):
     def fn(multitree, render=False, ignore_done=False):
         return fitness_function_pt(multitree, num_episodes=num_episodes,
                                    episode_duration=episode_duration,
-                                   render=render, ignore_done=ignore_done)
+                                   render=render, ignore_done=ignore_done,
+                                   seed=config.SEED)
     return fn
 
 
@@ -116,6 +117,7 @@ if __name__ == "__main__":
     parser.add_argument("--sweep-gens",     type=int,  default=sweep_config.SWEEP_GENS)
     parser.add_argument("--sweep-episodes", type=int,  default=sweep_config.SWEEP_EPISODES)
     parser.add_argument("--n-jobs",         type=int,  default=config.N_JOBS)
+    parser.add_argument("--seed",           type=int,  default=config.SEED)
     parser.add_argument("--resume",         action="store_true",  default=sweep_config.RESUME)
     parser.add_argument("--no-resume",      action="store_false", dest="resume")
     args = parser.parse_args()
@@ -125,6 +127,8 @@ if __name__ == "__main__":
     sweep_config.SWEEP_EPISODES = args.sweep_episodes
     sweep_config.RESUME         = args.resume
     config.N_JOBS               = args.n_jobs
+    config.SEED                 = args.seed
+    set_seed(config.SEED)
 
     if not sweep_config.RESUME and os.path.exists(sweep_config.DB_FILE):
         os.remove(sweep_config.DB_FILE)
@@ -137,7 +141,7 @@ if __name__ == "__main__":
         storage=f"sqlite:///{sweep_config.DB_FILE}",
         load_if_exists=sweep_config.RESUME,
         direction="maximize",
-        sampler=optuna.samplers.TPESampler(),
+        sampler=optuna.samplers.TPESampler(seed=config.SEED),
     )
     completed = len(study.trials)
     remaining = max(0, sweep_config.N_TRIALS - completed)

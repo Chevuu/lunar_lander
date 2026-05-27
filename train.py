@@ -19,6 +19,13 @@ num_features = env.observation_space.shape[0]
 Transition = namedtuple('Transition', ('state', 'action', 'next_state', 'reward'))
 
 
+def set_seed(seed):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    env.action_space.seed(seed)
+
+
 class ReplayMemory(object):
     def __init__(self, capacity):
         self.memory = deque([], maxlen=capacity)
@@ -41,12 +48,13 @@ class ReplayMemory(object):
         return self
 
 
-def fitness_function_pt(multitree, num_episodes=config.NUM_EPISODES, episode_duration=config.EPISODE_DURATION, render=False, ignore_done=False):
+def fitness_function_pt(multitree, num_episodes=config.NUM_EPISODES, episode_duration=config.EPISODE_DURATION, render=False, ignore_done=False, seed=config.SEED):
     memory = ReplayMemory(config.REPLAY_MEMORY_SIZE)
     rewards = []
 
-    for _ in range(num_episodes):
-        observation = env.reset()[0]
+    for episode_idx in range(num_episodes):
+        episode_seed = None if seed is None else seed + episode_idx
+        observation = env.reset(seed=episode_seed)[0]
 
         for _ in range(episode_duration):
             input_sample = torch.from_numpy(observation.reshape((1, -1))).float()
@@ -64,7 +72,7 @@ def fitness_function_pt(multitree, num_episodes=config.NUM_EPISODES, episode_dur
 def get_test_score(tree):
     rewards = []
     for i in range(config.TEST_EPISODES):
-        observation = env.reset(seed=i)[0]
+        observation = env.reset(seed=config.SEED + 10_000 + i)[0]
         for _ in range(config.TEST_EPISODE_DURATION):
             input_sample = torch.from_numpy(observation.reshape((1, -1))).float()
             action = torch.argmax(tree.get_output_pt(input_sample))
@@ -85,6 +93,7 @@ if __name__ == "__main__":
     parser.add_argument("--coeff-opt-steps", type=int,   default=config.COEFF_OPT_STEPS)
     parser.add_argument("--gamma",           type=float, default=config.GAMMA)
     parser.add_argument("--n-jobs",          type=int,   default=config.N_JOBS)
+    parser.add_argument("--seed",            type=int,   default=config.SEED)
     args = parser.parse_args()
 
     config.POP_SIZE        = args.pop_size
@@ -95,6 +104,9 @@ if __name__ == "__main__":
     config.COEFF_OPT_STEPS = args.coeff_opt_steps
     config.GAMMA           = args.gamma
     config.N_JOBS          = args.n_jobs
+    config.SEED            = args.seed
+
+    set_seed(config.SEED)
 
     leaf_nodes = [Feature(i) for i in range(num_features)]
     leaf_nodes += [Constant() for _ in range(config.NUM_CONSTANTS)]

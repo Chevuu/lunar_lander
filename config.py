@@ -1,5 +1,6 @@
 from genepro.node_impl import Plus, Minus, Times, Div, Sin, Cos, Exp, Log, Sqrt, Max, Min
 
+SEED = 42                  # fixed seed for reproducible experiments
 NUM_EPISODES = 15          # episodes per fitness evaluation; more = less noisy signal
 EPISODE_DURATION = 500     # max steps per episode before forced termination
 REPLAY_MEMORY_SIZE = 10000 # max transitions stored; oldest are dropped when full
