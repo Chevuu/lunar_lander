@@ -1,0 +1,6 @@
+Experiment: baseline
+Seed: 42
+Best training fitness: 235.386
+Test total score: -1011.661
+Test mean score: -101.166
+GIF: experiment_runs/20260527_151012_baseline/best_lander.gif

@@ -141,7 +141,6 @@ venv.bak/
 sweep.db
 sweep_results*.csv
 *.gif
-experiment_runs/
 .cache/
 
 # mypy
