@@ -7,5 +7,6 @@ sympy >= 1.9
 joblib >= 1.1.0
 torch
 notebook
+optuna
 swig
 gymnasium[box2d] == 0.26.2
