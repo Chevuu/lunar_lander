@@ -1,0 +1,57 @@
+{
+  "best_model_is_optimized": true,
+  "best_training_fitness": -1195.443554179918,
+  "best_training_fitness_before_optimization": -1195.443554179918,
+  "coefficient_optimization_last_loss": 4.954518179424932,
+  "generation_artifacts": [],
+  "sweep": null,
+  "test": {
+    "crash_rate": 1.0,
+    "crashed_episodes": 10,
+    "episode_lengths": [
+      130,
+      63,
+      107,
+      99,
+      120,
+      54,
+      94,
+      63,
+      53,
+      57
+    ],
+    "episode_scores": [
+      30.480855857027933,
+      -172.27060079308282,
+      -87.46957653387798,
+      -357.271062375557,
+      -92.61647998296102,
+      -147.67107143815184,
+      26.71563680948907,
+      -111.29603816543349,
+      -141.4956120904113,
+      -113.50499885271132
+    ],
+    "mean_score": -116.63989475656699,
+    "std_score": 103.07308809001006,
+    "survival_rate": 0.0,
+    "survived_episodes": 0,
+    "terminated_episodes": 10,
+    "total_episodes": 10,
+    "total_score": -1166.39894756567,
+    "truncated_episodes": 0
+  },
+  "video": {
+    "optimized_gif": {
+      "frames": 97,
+      "path": "experiment_runs/20260528_185629_default_20gens/best_lander.gif",
+      "reward": -26.736381154955453
+    },
+    "path": "experiment_runs/20260528_185629_default_20gens/best_lander.gif",
+    "raw_gif": {
+      "frames": 96,
+      "path": "experiment_runs/20260528_185629_default_20gens/best_lander_before_optimization.gif",
+      "reward": -141.45200255448822
+    }
+  }
+}

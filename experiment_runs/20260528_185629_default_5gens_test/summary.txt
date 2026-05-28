@@ -1,0 +1,12 @@
+Experiment: default_20gens
+Seed: 42
+Best training fitness: -1195.444
+Best model saved after coefficient optimization: yes
+Test total score: -1166.399
+Test mean score: -116.640
+Test score std: 103.073
+Test survival rate: 0.000
+Test crash rate: 1.000
+Generation artifacts: 0 checkpoints
+GIF before optimization: experiment_runs/20260528_185629_default_20gens/best_lander_before_optimization.gif
+GIF after optimization: experiment_runs/20260528_185629_default_20gens/best_lander.gif
