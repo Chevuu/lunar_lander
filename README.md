@@ -34,6 +34,7 @@ Each run creates a timestamped folder in `experiment_runs/` containing:
 - `generation_history.csv` with fitness, tree size, score standard deviation, and survival/crash rates per generation
 - `best_tree.txt` and `best_tree.pkl`
 - `best_lander.gif` unless `--no-video` is used
+- `generation_artifacts/` with a pickled model every 10 generations
 
 Useful examples:
 

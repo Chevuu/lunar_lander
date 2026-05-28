@@ -76,6 +76,7 @@ def parse_args():
     add_arg(parser, "video", defaults.get("video", True), action=argparse.BooleanOptionalAction)
     add_arg(parser, "video_duration", defaults.get("video_duration", config.TEST_EPISODE_DURATION), type=int)
     add_arg(parser, "video_seed_offset", defaults.get("video_seed_offset", 20_000), type=int)
+    add_arg(parser, "artifact_interval", defaults.get("artifact_interval", 10), type=int)
 
     add_arg(parser, "n_trials", defaults.get("n_trials", sweep_config.N_TRIALS), type=int)
     add_arg(parser, "sweep_gens", defaults.get("sweep_gens", sweep_config.SWEEP_GENS), type=int)
@@ -389,7 +390,7 @@ def run_training(args):
     )
     evo.evolve()
 
-    best = max(evo.best_of_gens, key=lambda t: t.fitness)
+    best = copy.deepcopy(max(evo.best_of_gens, key=lambda t: t.fitness))
     coeff_loss = optimize_constants(best, evo.memory, args)
     evaluation = evaluate_tree(
         best,
@@ -465,6 +466,34 @@ def render_gif(tree, path, seed, duration):
         loop=0,
     )
     return {"frames": len(frames), "reward": total_reward}
+
+
+def save_generation_artifacts(args, run_dir, evo):
+    interval = args.artifact_interval
+    if interval <= 0:
+        return []
+
+    artifact_dir = run_dir / "generation_artifacts"
+    artifact_dir.mkdir(exist_ok=True)
+    artifacts = []
+    for generation, tree in enumerate(evo.best_of_gens):
+        if generation == 0 or generation % interval != 0:
+            continue
+
+        prefix = f"generation_{generation:04d}"
+        pkl_path = artifact_dir / f"{prefix}_tree.pkl"
+        with open(pkl_path, "wb") as f:
+            pickle.dump(tree, f)
+
+        artifacts.append(
+            {
+                "generation": generation,
+                "fitness": float(tree.fitness),
+                "tree_size": int(len(tree)),
+                "model_path": str(pkl_path),
+            }
+        )
+    return artifacts
 
 
 def git_commit():
@@ -589,6 +618,7 @@ def apply_sweep_params(args, sweep_result):
 def save_training_outputs(args, run_dir, best, evo, coeff_loss, evaluation, sweep_result=None):
     write_json(run_dir / "run_config.json", args_to_dict(args))
     write_generation_history(evo, run_dir / "generation_history.csv")
+    generation_artifacts = save_generation_artifacts(args, run_dir, evo)
 
     with open(run_dir / "best_tree.txt", "w") as f:
         f.write(json.dumps(best.get_readable_repr(), indent=2))
@@ -613,6 +643,7 @@ def save_training_outputs(args, run_dir, best, evo, coeff_loss, evaluation, swee
         "coefficient_optimization_last_loss": coeff_loss,
         "test": evaluation,
         "video": video_info,
+        "generation_artifacts": generation_artifacts,
         "sweep": sweep_result,
     }
     write_json(run_dir / "metrics.json", metrics)
@@ -626,6 +657,7 @@ def save_training_outputs(args, run_dir, best, evo, coeff_loss, evaluation, swee
         f.write(f"Test score std: {evaluation['std_score']:.3f}\n")
         f.write(f"Test survival rate: {evaluation['survival_rate']:.3f}\n")
         f.write(f"Test crash rate: {evaluation['crash_rate']:.3f}\n")
+        f.write(f"Generation artifacts: {len(generation_artifacts)} checkpoints\n")
         if video_info:
             f.write(f"GIF: {video_info['path']}\n")
 
