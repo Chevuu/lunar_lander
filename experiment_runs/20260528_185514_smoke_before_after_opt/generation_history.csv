@@ -1,0 +1,3 @@
+generation,best_fitness,mean_fitness,std_fitness,best_tree_size,mean_tree_size,population_size,survived_agents,crashed_agents,agent_survival_rate,agent_crash_rate,total_episodes,survived_episodes,crashed_episodes,episode_survival_rate,episode_crash_rate,mean_episode_score,std_episode_score
+0,-28.68816040488434,-119.65013194435447,111.10186413124288,14,14.875,8,8,0,1.0,0.0,8,8,0,1.0,0.0,-119.65013194435447,111.10186413124288
+1,-28.68816040488434,-114.47959704001323,110.68921956311382,14,16.75,8,8,0,1.0,0.0,8,8,0,1.0,0.0,-114.47959704001323,110.68921956311382

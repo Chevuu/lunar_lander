@@ -1,0 +1,6 @@
+[
+  "(((log(abs(x_3))-0.47954902052879333)/log(abs((x_2+x_3))))*exp(exp(sin(x_0))))",
+  "exp(sqrt(abs((sqrt(abs(x_5))+x_2))))",
+  "sqrt(abs(sqrt(abs((sin(x_4)/0.5368606448173523)))))",
+  "sin(sqrt(abs(x_4)))"
+]

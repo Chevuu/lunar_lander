@@ -1,0 +1,70 @@
+{
+  "best_training_fitness": 49.50346948972138,
+  "coefficient_optimization_last_loss": 10437.689634842713,
+  "generation_artifacts": [
+    {
+      "fitness": -195.37819117269777,
+      "generation": 10,
+      "gif": {
+        "frames": 80,
+        "path": "experiment_runs/20260528_182008_default_20gens/generation_artifacts/generation_0010_lander.gif",
+        "reward": -105.59446079212326
+      },
+      "model_path": "experiment_runs/20260528_182008_default_20gens/generation_artifacts/generation_0010_tree.pkl",
+      "tree_size": 36
+    },
+    {
+      "fitness": 49.50346948972138,
+      "generation": 20,
+      "gif": {
+        "frames": 96,
+        "path": "experiment_runs/20260528_182008_default_20gens/generation_artifacts/generation_0020_lander.gif",
+        "reward": 10.967179471726098
+      },
+      "model_path": "experiment_runs/20260528_182008_default_20gens/generation_artifacts/generation_0020_tree.pkl",
+      "tree_size": 51
+    }
+  ],
+  "sweep": null,
+  "test": {
+    "crash_rate": 1.0,
+    "crashed_episodes": 10,
+    "episode_lengths": [
+      67,
+      84,
+      101,
+      83,
+      79,
+      65,
+      90,
+      73,
+      64,
+      68
+    ],
+    "episode_scores": [
+      27.50084310777818,
+      4.5065959800058835,
+      -10.81890886139064,
+      -39.37444954515085,
+      14.897827206458999,
+      -22.427656621143697,
+      -7.779767538841199,
+      -44.50550039230093,
+      -6.52006758885895,
+      -19.763808367747046
+    ],
+    "mean_score": -10.428489262119026,
+    "std_score": 21.344312473528603,
+    "survival_rate": 0.0,
+    "survived_episodes": 0,
+    "terminated_episodes": 10,
+    "total_episodes": 10,
+    "total_score": -104.28489262119025,
+    "truncated_episodes": 0
+  },
+  "video": {
+    "frames": 102,
+    "path": "experiment_runs/20260528_182008_default_20gens/best_lander.gif",
+    "reward": -13.70428430664164
+  }
+}

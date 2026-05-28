@@ -32,9 +32,9 @@ Each run creates a timestamped folder in `experiment_runs/` containing:
 - `run_config.json` and `requested_config.json` with the hyperparameters
 - `metrics.json` with train/test scores, score standard deviation, and survival/crash rates
 - `generation_history.csv` with fitness, tree size, score standard deviation, and survival/crash rates per generation
-- `best_tree.txt` and `best_tree.pkl`
-- `best_lander.gif` unless `--no-video` is used
-- `generation_artifacts/` with a pickled model and GIF every 10 generations
+- `best_tree.txt` and optimized `best_tree.pkl`
+- `best_lander_before_optimization.gif` and optimized `best_lander.gif` unless `--no-video` is used
+- `generation_artifacts/` with an optimized pickled model plus before/after optimization GIFs every 10 generations
 
 Useful examples:
 

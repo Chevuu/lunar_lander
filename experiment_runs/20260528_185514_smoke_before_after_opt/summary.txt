@@ -1,0 +1,12 @@
+Experiment: smoke_before_after_opt
+Seed: 42
+Best training fitness: -28.688
+Best model saved after coefficient optimization: yes
+Test total score: -39.297
+Test mean score: -39.297
+Test score std: 0.000
+Test survival rate: 1.000
+Test crash rate: 0.000
+Generation artifacts: 1 checkpoints
+GIF before optimization: experiment_runs/20260528_185514_smoke_before_after_opt/best_lander_before_optimization.gif
+GIF after optimization: experiment_runs/20260528_185514_smoke_before_after_opt/best_lander.gif

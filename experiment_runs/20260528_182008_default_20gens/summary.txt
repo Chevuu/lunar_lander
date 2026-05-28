@@ -1,0 +1,10 @@
+Experiment: default_20gens
+Seed: 42
+Best training fitness: 49.503
+Test total score: -104.285
+Test mean score: -10.428
+Test score std: 21.344
+Test survival rate: 0.000
+Test crash rate: 1.000
+Generation artifacts: 2 checkpoints
+GIF: experiment_runs/20260528_182008_default_20gens/best_lander.gif

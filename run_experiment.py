@@ -390,7 +390,8 @@ def run_training(args):
     )
     evo.evolve()
 
-    best = copy.deepcopy(max(evo.best_of_gens, key=lambda t: t.fitness))
+    raw_best = copy.deepcopy(max(evo.best_of_gens, key=lambda t: t.fitness))
+    best = copy.deepcopy(raw_best)
     coeff_loss = optimize_constants(best, evo.memory, args)
     evaluation = evaluate_tree(
         best,
@@ -398,7 +399,7 @@ def run_training(args):
         duration=args.test_duration,
         seed=args.seed + 10_000,
     )
-    return best, evo, coeff_loss, evaluation
+    return raw_best, best, evo, coeff_loss, evaluation
 
 
 def write_generation_history(evo, path):
@@ -481,26 +482,42 @@ def save_generation_artifacts(args, run_dir, evo):
             continue
 
         prefix = f"generation_{generation:04d}"
+        raw_tree = copy.deepcopy(tree)
+        optimized_tree = copy.deepcopy(tree)
+        coeff_loss = optimize_constants(optimized_tree, evo.memory, args)
         pkl_path = artifact_dir / f"{prefix}_tree.pkl"
         with open(pkl_path, "wb") as f:
-            pickle.dump(tree, f)
+            pickle.dump(optimized_tree, f)
 
         artifact = {
             "generation": generation,
-            "fitness": float(tree.fitness),
-            "tree_size": int(len(tree)),
+            "training_fitness": float(raw_tree.fitness),
+            "tree_size": int(len(optimized_tree)),
+            "model_is_optimized": True,
+            "coefficient_optimization_last_loss": coeff_loss,
             "model_path": str(pkl_path),
         }
         if args.video:
-            gif_path = artifact_dir / f"{prefix}_lander.gif"
-            gif_info = render_gif(
-                tree,
-                gif_path,
+            raw_gif_path = artifact_dir / f"{prefix}_before_optimization.gif"
+            raw_gif_info = render_gif(
+                raw_tree,
+                raw_gif_path,
                 seed=args.seed + args.video_seed_offset + generation,
                 duration=args.video_duration,
             )
-            gif_info["path"] = str(gif_path)
-            artifact["gif"] = gif_info
+            raw_gif_info["path"] = str(raw_gif_path)
+
+            optimized_gif_path = artifact_dir / f"{prefix}_after_optimization.gif"
+            optimized_gif_info = render_gif(
+                optimized_tree,
+                optimized_gif_path,
+                seed=args.seed + args.video_seed_offset + generation,
+                duration=args.video_duration,
+            )
+            optimized_gif_info["path"] = str(optimized_gif_path)
+            artifact["raw_gif"] = raw_gif_info
+            artifact["optimized_gif"] = optimized_gif_info
+            artifact["gif"] = optimized_gif_info
         artifacts.append(artifact)
     return artifacts
 
@@ -571,7 +588,7 @@ def run_sweep(args, run_dir):
         trial_args.max_gens = args.sweep_gens
         trial_args.num_episodes = args.sweep_episodes
 
-        _, _, _, evaluation = run_training(trial_args)
+        _, _, _, _, evaluation = run_training(trial_args)
         score = evaluation["total_score"]
         write_header = not sweep_csv.exists()
         with open(sweep_csv, "a", newline="") as f:
@@ -624,7 +641,7 @@ def apply_sweep_params(args, sweep_result):
     return args
 
 
-def save_training_outputs(args, run_dir, best, evo, coeff_loss, evaluation, sweep_result=None):
+def save_training_outputs(args, run_dir, raw_best, best, evo, coeff_loss, evaluation, sweep_result=None):
     write_json(run_dir / "run_config.json", args_to_dict(args))
     write_generation_history(evo, run_dir / "generation_history.csv")
     generation_artifacts = save_generation_artifacts(args, run_dir, evo)
@@ -638,17 +655,33 @@ def save_training_outputs(args, run_dir, best, evo, coeff_loss, evaluation, swee
 
     video_info = None
     if args.video:
-        gif_path = run_dir / "best_lander.gif"
-        video_info = render_gif(
-            best,
-            gif_path,
+        raw_gif_path = run_dir / "best_lander_before_optimization.gif"
+        raw_video_info = render_gif(
+            raw_best,
+            raw_gif_path,
             seed=args.seed + args.video_seed_offset,
             duration=args.video_duration,
         )
-        video_info["path"] = str(gif_path)
+        raw_video_info["path"] = str(raw_gif_path)
+
+        optimized_gif_path = run_dir / "best_lander.gif"
+        optimized_video_info = render_gif(
+            best,
+            optimized_gif_path,
+            seed=args.seed + args.video_seed_offset,
+            duration=args.video_duration,
+        )
+        optimized_video_info["path"] = str(optimized_gif_path)
+        video_info = {
+            "path": str(optimized_gif_path),
+            "raw_gif": raw_video_info,
+            "optimized_gif": optimized_video_info,
+        }
 
     metrics = {
         "best_training_fitness": float(best.fitness),
+        "best_training_fitness_before_optimization": float(raw_best.fitness),
+        "best_model_is_optimized": True,
         "coefficient_optimization_last_loss": coeff_loss,
         "test": evaluation,
         "video": video_info,
@@ -660,7 +693,8 @@ def save_training_outputs(args, run_dir, best, evo, coeff_loss, evaluation, swee
     with open(run_dir / "summary.txt", "w") as f:
         f.write(f"Experiment: {args.experiment_name}\n")
         f.write(f"Seed: {args.seed}\n")
-        f.write(f"Best training fitness: {best.fitness:.3f}\n")
+        f.write(f"Best training fitness: {raw_best.fitness:.3f}\n")
+        f.write("Best model saved after coefficient optimization: yes\n")
         f.write(f"Test total score: {evaluation['total_score']:.3f}\n")
         f.write(f"Test mean score: {evaluation['mean_score']:.3f}\n")
         f.write(f"Test score std: {evaluation['std_score']:.3f}\n")
@@ -668,7 +702,8 @@ def save_training_outputs(args, run_dir, best, evo, coeff_loss, evaluation, swee
         f.write(f"Test crash rate: {evaluation['crash_rate']:.3f}\n")
         f.write(f"Generation artifacts: {len(generation_artifacts)} checkpoints\n")
         if video_info:
-            f.write(f"GIF: {video_info['path']}\n")
+            f.write(f"GIF before optimization: {video_info['raw_gif']['path']}\n")
+            f.write(f"GIF after optimization: {video_info['optimized_gif']['path']}\n")
 
 
 def main():
@@ -691,8 +726,8 @@ def main():
         args.mode = "sweep-train-final"
         args.verbose = True
 
-    best, evo, coeff_loss, evaluation = run_training(args)
-    save_training_outputs(args, run_dir, best, evo, coeff_loss, evaluation, sweep_result)
+    raw_best, best, evo, coeff_loss, evaluation = run_training(args)
+    save_training_outputs(args, run_dir, raw_best, best, evo, coeff_loss, evaluation, sweep_result)
     print(f"Experiment complete. Results written to {run_dir}")
     print(f"Test total score: {evaluation['total_score']:.2f}")
     env.close()
