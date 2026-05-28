@@ -30,8 +30,8 @@ to run the required training/evaluation steps and log the output:
 Each run creates a timestamped folder in `experiment_runs/` containing:
 
 - `run_config.json` and `requested_config.json` with the hyperparameters
-- `metrics.json` with train/test scores
-- `generation_history.csv` with best fitness per generation
+- `metrics.json` with train/test scores and survival/crash rates
+- `generation_history.csv` with fitness, tree size, and survival/crash rates per generation
 - `best_tree.txt` and `best_tree.pkl`
 - `best_lander.gif` unless `--no-video` is used
 

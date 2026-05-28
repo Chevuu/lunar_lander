@@ -15,12 +15,13 @@ os.environ.setdefault("XDG_CACHE_HOME", ".cache")
 import numpy as np
 import torch
 import torch.optim as optim
+from joblib.parallel import Parallel, delayed
 
 import config
 import sweep_config
-from genepro.evo import Evolution
+from genepro.evo import Evolution, generate_offspring, generate_random_multitree
 from genepro.node_impl import Constant, Feature
-from train import Transition, env, fitness_function_pt, num_features, set_seed
+from train import ReplayMemory, Transition, env, num_features, set_seed
 
 
 def load_json_defaults(path):
@@ -91,16 +92,88 @@ def make_run_dir(args):
     return run_dir
 
 
+def is_crash(terminated, final_reward):
+    return bool(terminated and final_reward <= -100.0)
+
+
+def run_policy_episodes(tree, episodes, duration, seed, collect_memory=False, render=False, ignore_done=False):
+    memory = ReplayMemory(config.REPLAY_MEMORY_SIZE) if collect_memory else None
+    episode_rewards = []
+    episode_lengths = []
+    crashed_episodes = 0
+    survived_episodes = 0
+    terminated_episodes = 0
+    truncated_episodes = 0
+
+    for episode_idx in range(episodes):
+        episode_seed = None if seed is None else seed + episode_idx
+        observation = env.reset(seed=episode_seed)[0]
+        total_reward = 0.0
+        final_reward = 0.0
+        terminated = False
+        truncated = False
+        steps = 0
+
+        for _ in range(duration):
+            input_sample = torch.from_numpy(observation.reshape((1, -1))).float()
+            action = torch.argmax(tree.get_output_pt(input_sample))
+            observation, reward, terminated, truncated, _ = env.step(action.item())
+            final_reward = float(reward)
+            total_reward += final_reward
+            steps += 1
+
+            if collect_memory:
+                output_sample = torch.from_numpy(observation.reshape((1, -1))).float()
+                memory.push(
+                    input_sample,
+                    torch.tensor([[action.item()]]),
+                    output_sample,
+                    torch.tensor([reward]),
+                )
+
+            if render:
+                env.render()
+
+            if (terminated or truncated) and not ignore_done:
+                break
+
+        crashed = is_crash(terminated, final_reward)
+        crashed_episodes += int(crashed)
+        survived_episodes += int(not crashed)
+        terminated_episodes += int(terminated)
+        truncated_episodes += int(truncated)
+        episode_rewards.append(total_reward)
+        episode_lengths.append(steps)
+
+    total_episodes = len(episode_rewards)
+    stats = {
+        "total_score": float(sum(episode_rewards)),
+        "mean_score": float(np.mean(episode_rewards)) if episode_rewards else 0.0,
+        "episode_scores": episode_rewards,
+        "episode_lengths": episode_lengths,
+        "total_episodes": total_episodes,
+        "survived_episodes": survived_episodes,
+        "crashed_episodes": crashed_episodes,
+        "terminated_episodes": terminated_episodes,
+        "truncated_episodes": truncated_episodes,
+        "survival_rate": float(survived_episodes / total_episodes) if total_episodes else 0.0,
+        "crash_rate": float(crashed_episodes / total_episodes) if total_episodes else 0.0,
+    }
+    return stats, memory
+
+
 def make_fitness_fn(num_episodes, episode_duration, seed):
     def fn(multitree, render=False, ignore_done=False):
-        return fitness_function_pt(
+        stats, memory = run_policy_episodes(
             multitree,
-            num_episodes=num_episodes,
-            episode_duration=episode_duration,
+            episodes=num_episodes,
+            duration=episode_duration,
+            seed=seed,
+            collect_memory=True,
             render=render,
             ignore_done=ignore_done,
-            seed=seed,
         )
+        return stats["total_score"], memory, stats
 
     return fn
 
@@ -128,6 +201,119 @@ def build_leaf_nodes(num_constants):
     leaf_nodes = [Feature(i) for i in range(num_features)]
     leaf_nodes += [Constant() for _ in range(num_constants)]
     return leaf_nodes
+
+
+def merge_memories(memories):
+    memory = memories[0]
+    for next_memory in memories[1:]:
+        memory += next_memory
+    return memory
+
+
+def summarize_population(generation, population):
+    fitnesses = np.array([float(t.fitness) for t in population], dtype=float)
+    sizes = np.array([int(len(t)) for t in population], dtype=int)
+    total_episodes = 0
+    survived_episodes = 0
+    crashed_episodes = 0
+    survived_agents = 0
+    crashed_agents = 0
+
+    for individual in population:
+        stats = getattr(individual, "_episode_stats", None)
+        if not stats:
+            continue
+        total_episodes += stats["total_episodes"]
+        survived_episodes += stats["survived_episodes"]
+        crashed_episodes += stats["crashed_episodes"]
+        if stats["crashed_episodes"] == 0:
+            survived_agents += 1
+        else:
+            crashed_agents += 1
+
+    return {
+        "generation": generation,
+        "best_fitness": float(np.max(fitnesses)),
+        "mean_fitness": float(np.mean(fitnesses)),
+        "best_tree_size": int(sizes[np.argmax(fitnesses)]),
+        "mean_tree_size": float(np.mean(sizes)),
+        "population_size": int(len(population)),
+        "survived_agents": survived_agents,
+        "crashed_agents": crashed_agents,
+        "agent_survival_rate": float(survived_agents / len(population)) if population else 0.0,
+        "agent_crash_rate": float(crashed_agents / len(population)) if population else 0.0,
+        "total_episodes": total_episodes,
+        "survived_episodes": survived_episodes,
+        "crashed_episodes": crashed_episodes,
+        "episode_survival_rate": float(survived_episodes / total_episodes) if total_episodes else 0.0,
+        "episode_crash_rate": float(crashed_episodes / total_episodes) if total_episodes else 0.0,
+    }
+
+
+class ExperimentEvolution(Evolution):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.generation_records = []
+
+    def _evaluate_population(self, population):
+        results = Parallel(n_jobs=self.n_jobs)(delayed(self.fitness_function)(t) for t in population)
+        fitnesses, memories, episode_stats = list(map(list, zip(*results)))
+        for individual, fitness, stats in zip(population, fitnesses, episode_stats):
+            individual.fitness = fitness
+            individual._episode_stats = stats
+        return merge_memories(memories)
+
+    def _initialize_population(self):
+        self.population = Parallel(n_jobs=self.n_jobs)(
+            delayed(generate_random_multitree)(
+                self.n_trees,
+                self.internal_nodes,
+                self.leaf_nodes,
+                max_depth=self.init_max_depth,
+            )
+            for _ in range(self.pop_size)
+        )
+
+        for individual in self.population:
+            individual.get_readable_repr()
+
+        self.memory = self._evaluate_population(self.population)
+        self.num_evals += self.pop_size
+        best = self.population[np.argmax([t.fitness for t in self.population])]
+        self.best_of_gens.append(copy.deepcopy(best))
+        self.generation_records.append(summarize_population(0, self.population))
+
+    def _perform_generation(self):
+        sel_fun = self.selection["fun"]
+        parents = sel_fun(self.population, self.pop_size, **self.selection["kwargs"])
+        offspring_population = Parallel(n_jobs=self.n_jobs)(
+            delayed(generate_offspring)(
+                t,
+                self.crossovers,
+                self.mutations,
+                self.coeff_opts,
+                parents,
+                self.internal_nodes,
+                self.leaf_nodes,
+                constraints={"max_tree_size": self.max_tree_size},
+            )
+            for t in parents
+        )
+
+        generation_memory = self._evaluate_population(offspring_population)
+        self.memory = generation_memory + self.memory
+        self.num_evals += self.pop_size
+
+        if self.best_of_gens:
+            all_time_best = max(self.best_of_gens, key=lambda t: t.fitness)
+            worst_idx = int(np.argmin([t.fitness for t in offspring_population]))
+            offspring_population[worst_idx] = copy.deepcopy(all_time_best)
+
+        self.population = offspring_population
+        self.num_gens += 1
+        best = self.population[np.argmax([t.fitness for t in self.population])]
+        self.best_of_gens.append(copy.deepcopy(best))
+        self.generation_records.append(summarize_population(self.num_gens, self.population))
 
 
 def optimize_constants(best, memory, args):
@@ -167,23 +353,14 @@ def optimize_constants(best, memory, args):
 
 
 def evaluate_tree(tree, episodes, duration, seed):
-    episode_rewards = []
-    for episode_idx in range(episodes):
-        observation = env.reset(seed=seed + episode_idx)[0]
-        rewards = []
-        for _ in range(duration):
-            input_sample = torch.from_numpy(observation.reshape((1, -1))).float()
-            action = torch.argmax(tree.get_output_pt(input_sample))
-            observation, reward, terminated, truncated, _ = env.step(action.item())
-            rewards.append(float(reward))
-            if terminated or truncated:
-                break
-        episode_rewards.append(sum(rewards))
-    return {
-        "total_score": float(sum(episode_rewards)),
-        "mean_score": float(np.mean(episode_rewards)),
-        "episode_scores": episode_rewards,
-    }
+    stats, _ = run_policy_episodes(
+        tree,
+        episodes=episodes,
+        duration=duration,
+        seed=seed,
+        collect_memory=False,
+    )
+    return stats
 
 
 def run_training(args):
@@ -192,7 +369,7 @@ def run_training(args):
     leaf_nodes = build_leaf_nodes(args.num_constants)
     fitness_fn = make_fitness_fn(args.num_episodes, args.episode_duration, args.seed)
 
-    evo = Evolution(
+    evo = ExperimentEvolution(
         fitness_fn,
         config.INTERNAL_NODES,
         leaf_nodes,
@@ -217,6 +394,30 @@ def run_training(args):
 
 
 def write_generation_history(evo, path):
+    if getattr(evo, "generation_records", None):
+        fieldnames = [
+            "generation",
+            "best_fitness",
+            "mean_fitness",
+            "best_tree_size",
+            "mean_tree_size",
+            "population_size",
+            "survived_agents",
+            "crashed_agents",
+            "agent_survival_rate",
+            "agent_crash_rate",
+            "total_episodes",
+            "survived_episodes",
+            "crashed_episodes",
+            "episode_survival_rate",
+            "episode_crash_rate",
+        ]
+        with open(path, "w", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(evo.generation_records)
+        return
+
     with open(path, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=["generation", "fitness", "tree_size"])
         writer.writeheader()
@@ -412,6 +613,8 @@ def save_training_outputs(args, run_dir, best, evo, coeff_loss, evaluation, swee
         f.write(f"Best training fitness: {best.fitness:.3f}\n")
         f.write(f"Test total score: {evaluation['total_score']:.3f}\n")
         f.write(f"Test mean score: {evaluation['mean_score']:.3f}\n")
+        f.write(f"Test survival rate: {evaluation['survival_rate']:.3f}\n")
+        f.write(f"Test crash rate: {evaluation['crash_rate']:.3f}\n")
         if video_info:
             f.write(f"GIF: {video_info['path']}\n")
 
