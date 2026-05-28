@@ -485,14 +485,23 @@ def save_generation_artifacts(args, run_dir, evo):
         with open(pkl_path, "wb") as f:
             pickle.dump(tree, f)
 
-        artifacts.append(
-            {
-                "generation": generation,
-                "fitness": float(tree.fitness),
-                "tree_size": int(len(tree)),
-                "model_path": str(pkl_path),
-            }
-        )
+        artifact = {
+            "generation": generation,
+            "fitness": float(tree.fitness),
+            "tree_size": int(len(tree)),
+            "model_path": str(pkl_path),
+        }
+        if args.video:
+            gif_path = artifact_dir / f"{prefix}_lander.gif"
+            gif_info = render_gif(
+                tree,
+                gif_path,
+                seed=args.seed + args.video_seed_offset + generation,
+                duration=args.video_duration,
+            )
+            gif_info["path"] = str(gif_path)
+            artifact["gif"] = gif_info
+        artifacts.append(artifact)
     return artifacts
 
 

@@ -34,7 +34,7 @@ Each run creates a timestamped folder in `experiment_runs/` containing:
 - `generation_history.csv` with fitness, tree size, score standard deviation, and survival/crash rates per generation
 - `best_tree.txt` and `best_tree.pkl`
 - `best_lander.gif` unless `--no-video` is used
-- `generation_artifacts/` with a pickled model every 10 generations
+- `generation_artifacts/` with a pickled model and GIF every 10 generations
 
 Useful examples:
 
@@ -44,6 +44,9 @@ Useful examples:
 
 # Full configured run with a fixed seed
 .venv/bin/python run_experiment.py --mode train --seed 42 --pop-size 128 --max-gens 35 --num-episodes 15
+
+# Default 20-generation run with generation 10 and 20 artifacts
+.venv/bin/python run_experiment.py --mode train --experiment-name default_20gens --max-gens 20
 
 # Hyperparameter sweep only
 .venv/bin/python run_experiment.py --mode sweep --n-trials 20 --sweep-gens 10 --sweep-episodes 5
