@@ -146,9 +146,11 @@ def run_policy_episodes(tree, episodes, duration, seed, collect_memory=False, re
         episode_lengths.append(steps)
 
     total_episodes = len(episode_rewards)
+    reward_std = float(np.std(episode_rewards)) if episode_rewards else 0.0
     stats = {
         "total_score": float(sum(episode_rewards)),
         "mean_score": float(np.mean(episode_rewards)) if episode_rewards else 0.0,
+        "std_score": reward_std,
         "episode_scores": episode_rewards,
         "episode_lengths": episode_lengths,
         "total_episodes": total_episodes,
@@ -213,6 +215,7 @@ def merge_memories(memories):
 def summarize_population(generation, population):
     fitnesses = np.array([float(t.fitness) for t in population], dtype=float)
     sizes = np.array([int(len(t)) for t in population], dtype=int)
+    episode_scores = []
     total_episodes = 0
     survived_episodes = 0
     crashed_episodes = 0
@@ -223,6 +226,7 @@ def summarize_population(generation, population):
         stats = getattr(individual, "_episode_stats", None)
         if not stats:
             continue
+        episode_scores.extend(stats["episode_scores"])
         total_episodes += stats["total_episodes"]
         survived_episodes += stats["survived_episodes"]
         crashed_episodes += stats["crashed_episodes"]
@@ -235,6 +239,7 @@ def summarize_population(generation, population):
         "generation": generation,
         "best_fitness": float(np.max(fitnesses)),
         "mean_fitness": float(np.mean(fitnesses)),
+        "std_fitness": float(np.std(fitnesses)),
         "best_tree_size": int(sizes[np.argmax(fitnesses)]),
         "mean_tree_size": float(np.mean(sizes)),
         "population_size": int(len(population)),
@@ -247,6 +252,8 @@ def summarize_population(generation, population):
         "crashed_episodes": crashed_episodes,
         "episode_survival_rate": float(survived_episodes / total_episodes) if total_episodes else 0.0,
         "episode_crash_rate": float(crashed_episodes / total_episodes) if total_episodes else 0.0,
+        "mean_episode_score": float(np.mean(episode_scores)) if episode_scores else 0.0,
+        "std_episode_score": float(np.std(episode_scores)) if episode_scores else 0.0,
     }
 
 
@@ -399,6 +406,7 @@ def write_generation_history(evo, path):
             "generation",
             "best_fitness",
             "mean_fitness",
+            "std_fitness",
             "best_tree_size",
             "mean_tree_size",
             "population_size",
@@ -411,6 +419,8 @@ def write_generation_history(evo, path):
             "crashed_episodes",
             "episode_survival_rate",
             "episode_crash_rate",
+            "mean_episode_score",
+            "std_episode_score",
         ]
         with open(path, "w", newline="") as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -613,6 +623,7 @@ def save_training_outputs(args, run_dir, best, evo, coeff_loss, evaluation, swee
         f.write(f"Best training fitness: {best.fitness:.3f}\n")
         f.write(f"Test total score: {evaluation['total_score']:.3f}\n")
         f.write(f"Test mean score: {evaluation['mean_score']:.3f}\n")
+        f.write(f"Test score std: {evaluation['std_score']:.3f}\n")
         f.write(f"Test survival rate: {evaluation['survival_rate']:.3f}\n")
         f.write(f"Test crash rate: {evaluation['crash_rate']:.3f}\n")
         if video_info:
