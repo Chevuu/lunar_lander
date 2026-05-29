@@ -5,7 +5,7 @@
   "coeff_opt_steps": 250,
   "config_json": null,
   "episode_duration": 500,
-  "experiment_name": "default_20gens",
+  "experiment_name": "default_75gens",
   "gamma": 0.9796,
   "git_commit": "61bc22478ad1867fe13e40c13e9773520f4c282d",
   "grad_clip": 100,

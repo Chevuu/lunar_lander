@@ -8,5 +8,5 @@ Test score std: 127.615
 Test survival rate: 0.400
 Test crash rate: 0.600
 Generation artifacts: 7 checkpoints
-GIF before optimization: experiment_runs/20260528_190135_default_20gens/best_lander_before_optimization.gif
-GIF after optimization: experiment_runs/20260528_190135_default_20gens/best_lander.gif
+GIF before optimization: experiment_runs/20260528_190135_default_75gens/best_lander_before_optimization.gif
+GIF after optimization: experiment_runs/20260528_190135_default_75gens/best_lander.gif
