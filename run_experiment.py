@@ -291,6 +291,7 @@ class ExperimentEvolution(Evolution):
         self.run_dir = run_dir
         self.generation_records = []
         self.generation_artifacts = []
+        self.elite = None
 
     def _evaluate_population(self, population):
         results = Parallel(n_jobs=self.n_jobs)(delayed(self.fitness_function)(t) for t in population)
@@ -368,6 +369,7 @@ class ExperimentEvolution(Evolution):
         self.num_evals += self.pop_size
         best = self.population[np.argmax([t.fitness for t in self.population])]
         self.best_of_gens.append(copy.deepcopy(best))
+        self.elite = copy.deepcopy(best)
         record = summarize_population(0, self.population)
         self.generation_records.append(record)
         self._append_csv_row(record)
@@ -393,17 +395,20 @@ class ExperimentEvolution(Evolution):
         self.memory = generation_memory + self.memory
         self.num_evals += self.pop_size
 
-        if self.best_of_gens:
-            all_time_best = copy.deepcopy(max(self.best_of_gens, key=lambda t: t.fitness))
+        if self.elite is not None:
+            elite_candidate = copy.deepcopy(self.elite)
             if config.RANDOM_SEEDS:
-                all_time_best.fitness, _, all_time_best._episode_stats = self.fitness_function(all_time_best)
+                elite_candidate.fitness, _, elite_candidate._episode_stats = self.fitness_function(elite_candidate)
             worst_idx = int(np.argmin([t.fitness for t in offspring_population]))
-            offspring_population[worst_idx] = all_time_best
+            offspring_population[worst_idx] = elite_candidate
 
         self.population = offspring_population
         self.num_gens += 1
         best = self.population[np.argmax([t.fitness for t in self.population])]
         self.best_of_gens.append(copy.deepcopy(best))
+
+        if self.elite is None or best.fitness > self.elite.fitness:
+            self.elite = copy.deepcopy(best)
         record = summarize_population(self.num_gens, self.population)
         self.generation_records.append(record)
         self._append_csv_row(record)
