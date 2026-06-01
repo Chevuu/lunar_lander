@@ -394,9 +394,11 @@ class ExperimentEvolution(Evolution):
         self.num_evals += self.pop_size
 
         if self.best_of_gens:
-            all_time_best = max(self.best_of_gens, key=lambda t: t.fitness)
+            all_time_best = copy.deepcopy(max(self.best_of_gens, key=lambda t: t.fitness))
+            if config.RANDOM_SEEDS:
+                all_time_best.fitness, _, all_time_best._episode_stats = self.fitness_function(all_time_best)
             worst_idx = int(np.argmin([t.fitness for t in offspring_population]))
-            offspring_population[worst_idx] = copy.deepcopy(all_time_best)
+            offspring_population[worst_idx] = all_time_best
 
         self.population = offspring_population
         self.num_gens += 1
