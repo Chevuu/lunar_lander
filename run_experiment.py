@@ -186,7 +186,7 @@ def make_fitness_fn(num_episodes, episode_duration, seed):
         if config.CRASH_PENALTY:
             fitness -= 100 * stats["crashed_episodes"]
         if config.PARSIMONY:
-            fitness -= 5 * len(multitree)
+            fitness -= 1 * len(multitree)
         if config.TIME_PRESSURE:
             fitness -= 0.1 * sum(stats["episode_lengths"])
         return fitness, memory, stats
