@@ -23,3 +23,8 @@ GRAD_CLIP = 100            # gradient clipping value to prevent exploding gradie
 
 TEST_EPISODES = 10         # episodes used to compute final test score
 TEST_EPISODE_DURATION = 500  # max steps per test episode
+
+RANDOM_SEEDS = False       # randomise episode seeds per evaluation to prevent overfitting to fixed scenarios
+CRASH_PENALTY = False      # subtract 100 * crashed_episodes from fitness to directly penalise crashes
+PARSIMONY = False          # subtract 5 * tree_size from fitness to discourage bloat
+TIME_PRESSURE = False      # subtract 0.1 * total_steps from fitness to discourage hovering without landing

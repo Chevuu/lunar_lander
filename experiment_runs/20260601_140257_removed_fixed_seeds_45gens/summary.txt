@@ -1,0 +1,7 @@
+Experiment: removed_fixed_seeds_100gens
+Seed: 42
+Best checkpoint: generation_0040_tree.pkl
+Best training fitness: 3329.562
+Test mean score: 190.701
+Test survival rate: 0.700
+Checkpoints: 4

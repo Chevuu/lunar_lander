@@ -1,0 +1,12 @@
+Experiment: removed_fixed_seeds_50gens
+Seed: 42
+Best training fitness: -59.205
+Best model saved after coefficient optimization: yes
+Test total score: -831.875
+Test mean score: -83.187
+Test score std: 83.690
+Test survival rate: 0.000
+Test crash rate: 1.000
+Generation artifacts: 5 checkpoints
+GIF before optimization: experiment_runs/20260601_120110_removed_fixed_seeds_50gens/best_lander_before_optimization.gif
+GIF after optimization: experiment_runs/20260601_120110_removed_fixed_seeds_50gens/best_lander.gif

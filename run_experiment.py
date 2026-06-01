@@ -78,6 +78,11 @@ def parse_args():
     add_arg(parser, "video_seed_offset", defaults.get("video_seed_offset", 20_000), type=int)
     add_arg(parser, "artifact_interval", defaults.get("artifact_interval", 10), type=int)
 
+    add_arg(parser, "random_seeds", defaults.get("random_seeds", config.RANDOM_SEEDS), action=argparse.BooleanOptionalAction)
+    add_arg(parser, "crash_penalty", defaults.get("crash_penalty", config.CRASH_PENALTY), action=argparse.BooleanOptionalAction)
+    add_arg(parser, "parsimony", defaults.get("parsimony", config.PARSIMONY), action=argparse.BooleanOptionalAction)
+    add_arg(parser, "time_pressure", defaults.get("time_pressure", config.TIME_PRESSURE), action=argparse.BooleanOptionalAction)
+
     add_arg(parser, "n_trials", defaults.get("n_trials", sweep_config.N_TRIALS), type=int)
     add_arg(parser, "sweep_gens", defaults.get("sweep_gens", sweep_config.SWEEP_GENS), type=int)
     add_arg(parser, "sweep_episodes", defaults.get("sweep_episodes", sweep_config.SWEEP_EPISODES), type=int)
@@ -167,16 +172,24 @@ def run_policy_episodes(tree, episodes, duration, seed, collect_memory=False, re
 
 def make_fitness_fn(num_episodes, episode_duration, seed):
     def fn(multitree, render=False, ignore_done=False):
+        eval_seed = None if config.RANDOM_SEEDS else seed
         stats, memory = run_policy_episodes(
             multitree,
             episodes=num_episodes,
             duration=episode_duration,
-            seed=seed,
+            seed=eval_seed,
             collect_memory=True,
             render=render,
             ignore_done=ignore_done,
         )
-        return stats["total_score"], memory, stats
+        fitness = stats["total_score"]
+        if config.CRASH_PENALTY:
+            fitness -= 100 * stats["crashed_episodes"]
+        if config.PARSIMONY:
+            fitness -= 5 * len(multitree)
+        if config.TIME_PRESSURE:
+            fitness -= 0.1 * sum(stats["episode_lengths"])
+        return fitness, memory, stats
 
     return fn
 
@@ -198,6 +211,10 @@ def update_runtime_config(args):
     config.TEST_EPISODES = args.test_episodes
     config.TEST_EPISODE_DURATION = args.test_duration
     config.VERBOSE = args.verbose
+    config.RANDOM_SEEDS = args.random_seeds
+    config.CRASH_PENALTY = args.crash_penalty
+    config.PARSIMONY = args.parsimony
+    config.TIME_PRESSURE = args.time_pressure
 
 
 def build_leaf_nodes(num_constants):
@@ -258,10 +275,22 @@ def summarize_population(generation, population):
     }
 
 
+CSV_FIELDNAMES = [
+    "generation", "best_fitness", "mean_fitness", "std_fitness",
+    "best_tree_size", "mean_tree_size", "population_size",
+    "survived_agents", "crashed_agents", "agent_survival_rate", "agent_crash_rate",
+    "total_episodes", "survived_episodes", "crashed_episodes",
+    "episode_survival_rate", "episode_crash_rate", "mean_episode_score", "std_episode_score",
+]
+
+
 class ExperimentEvolution(Evolution):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, run_args=None, run_dir=None, **kwargs):
         super().__init__(*args, **kwargs)
+        self.run_args = run_args
+        self.run_dir = run_dir
         self.generation_records = []
+        self.generation_artifacts = []
 
     def _evaluate_population(self, population):
         results = Parallel(n_jobs=self.n_jobs)(delayed(self.fitness_function)(t) for t in population)
@@ -270,6 +299,56 @@ class ExperimentEvolution(Evolution):
             individual.fitness = fitness
             individual._episode_stats = stats
         return merge_memories(memories)
+
+    def _append_csv_row(self, record):
+        if self.run_dir is None:
+            return
+        path = self.run_dir / "generation_history.csv"
+        write_header = not path.exists()
+        with open(path, "a", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=CSV_FIELDNAMES)
+            if write_header:
+                writer.writeheader()
+            writer.writerow(record)
+
+    def _write_checkpoint(self, generation):
+        if self.run_dir is None or self.run_args is None:
+            return
+        args = self.run_args
+        tree = self.best_of_gens[generation]
+        artifact_dir = self.run_dir / "generation_artifacts"
+        artifact_dir.mkdir(exist_ok=True)
+
+        prefix = f"generation_{generation:04d}"
+        raw_tree = copy.deepcopy(tree)
+        optimized_tree = copy.deepcopy(tree)
+        coeff_loss = optimize_constants(optimized_tree, self.memory, args)
+
+        pkl_path = artifact_dir / f"{prefix}_tree.pkl"
+        with open(pkl_path, "wb") as f:
+            pickle.dump(optimized_tree, f)
+
+        artifact = {
+            "generation": generation,
+            "training_fitness": float(raw_tree.fitness),
+            "tree_size": int(len(optimized_tree)),
+            "model_is_optimized": True,
+            "coefficient_optimization_last_loss": coeff_loss,
+            "model_path": str(pkl_path),
+        }
+        if args.video:
+            raw_gif_path = artifact_dir / f"{prefix}_before_optimization.gif"
+            raw_gif_info = render_gif(raw_tree, raw_gif_path, seed=args.seed + args.video_seed_offset + generation, duration=args.video_duration)
+            raw_gif_info["path"] = str(raw_gif_path)
+            optimized_gif_path = artifact_dir / f"{prefix}_after_optimization.gif"
+            optimized_gif_info = render_gif(optimized_tree, optimized_gif_path, seed=args.seed + args.video_seed_offset + generation, duration=args.video_duration)
+            optimized_gif_info["path"] = str(optimized_gif_path)
+            artifact["raw_gif"] = raw_gif_info
+            artifact["optimized_gif"] = optimized_gif_info
+            artifact["gif"] = optimized_gif_info
+
+        self.generation_artifacts.append(artifact)
+        print(f"  checkpoint written: {prefix}")
 
     def _initialize_population(self):
         self.population = Parallel(n_jobs=self.n_jobs)(
@@ -289,7 +368,9 @@ class ExperimentEvolution(Evolution):
         self.num_evals += self.pop_size
         best = self.population[np.argmax([t.fitness for t in self.population])]
         self.best_of_gens.append(copy.deepcopy(best))
-        self.generation_records.append(summarize_population(0, self.population))
+        record = summarize_population(0, self.population)
+        self.generation_records.append(record)
+        self._append_csv_row(record)
 
     def _perform_generation(self):
         sel_fun = self.selection["fun"]
@@ -321,7 +402,12 @@ class ExperimentEvolution(Evolution):
         self.num_gens += 1
         best = self.population[np.argmax([t.fitness for t in self.population])]
         self.best_of_gens.append(copy.deepcopy(best))
-        self.generation_records.append(summarize_population(self.num_gens, self.population))
+        record = summarize_population(self.num_gens, self.population)
+        self.generation_records.append(record)
+        self._append_csv_row(record)
+
+        if self.run_args and self.run_args.artifact_interval > 0 and self.num_gens % self.run_args.artifact_interval == 0:
+            self._write_checkpoint(self.num_gens)
 
 
 def optimize_constants(best, memory, args):
@@ -371,7 +457,7 @@ def evaluate_tree(tree, episodes, duration, seed):
     return stats
 
 
-def run_training(args):
+def run_training(args, run_dir):
     update_runtime_config(args)
     set_seed(args.seed)
     leaf_nodes = build_leaf_nodes(args.num_constants)
@@ -387,6 +473,8 @@ def run_training(args):
         max_tree_size=args.max_tree_size,
         n_jobs=args.n_jobs,
         verbose=args.verbose,
+        run_args=args,
+        run_dir=run_dir,
     )
     evo.evolve()
 
@@ -643,8 +731,11 @@ def apply_sweep_params(args, sweep_result):
 
 def save_training_outputs(args, run_dir, raw_best, best, evo, coeff_loss, evaluation, sweep_result=None):
     write_json(run_dir / "run_config.json", args_to_dict(args))
-    write_generation_history(evo, run_dir / "generation_history.csv")
-    generation_artifacts = save_generation_artifacts(args, run_dir, evo)
+    # generation_history.csv and generation_artifacts are written incrementally during training
+    csv_path = run_dir / "generation_history.csv"
+    if not csv_path.exists():
+        write_generation_history(evo, csv_path)
+    generation_artifacts = evo.generation_artifacts if evo.generation_artifacts else save_generation_artifacts(args, run_dir, evo)
 
     with open(run_dir / "best_tree.txt", "w") as f:
         f.write(json.dumps(best.get_readable_repr(), indent=2))
@@ -726,11 +817,15 @@ def main():
         args.mode = "sweep-train-final"
         args.verbose = True
 
-    raw_best, best, evo, coeff_loss, evaluation = run_training(args)
+    raw_best, best, evo, coeff_loss, evaluation = run_training(args, run_dir)
     save_training_outputs(args, run_dir, raw_best, best, evo, coeff_loss, evaluation, sweep_result)
     print(f"Experiment complete. Results written to {run_dir}")
     print(f"Test total score: {evaluation['total_score']:.2f}")
     env.close()
+
+    print("Generating plots...")
+    import sys
+    subprocess.run([sys.executable, str(Path(__file__).parent / "plot_run.py"), run_dir.name], check=False)
 
 
 if __name__ == "__main__":
