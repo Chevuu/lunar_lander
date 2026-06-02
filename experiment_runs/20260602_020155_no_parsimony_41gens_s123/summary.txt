@@ -1,0 +1,7 @@
+Experiment: no_parsimony_75gens_s123
+Seed: 123
+Best checkpoint: generation_0040_tree.pkl
+Best training fitness: -334.277
+Test mean score: -92.411
+Test survival rate: 0.000
+Checkpoints: 4

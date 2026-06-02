@@ -1,0 +1,12 @@
+Experiment: no_parsimony_75gens_s42
+Seed: 42
+Best training fitness: 287.476
+Best model saved after coefficient optimization: yes
+Test total score: -313.632
+Test mean score: -31.363
+Test score std: 37.302
+Test survival rate: 0.000
+Test crash rate: 1.000
+Generation artifacts: 7 checkpoints
+GIF before optimization: experiment_runs\20260601_223354_no_parsimony_75gens_s42\best_lander_before_optimization.gif
+GIF after optimization: experiment_runs\20260601_223354_no_parsimony_75gens_s42\best_lander.gif
