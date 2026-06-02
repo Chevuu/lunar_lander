@@ -1,0 +1,12 @@
+Experiment: mutation_0_3
+Seed: 42
+Best training fitness: -409.636
+Best model saved after coefficient optimization: yes
+Test total score: -1140.310
+Test mean score: -114.031
+Test score std: 126.906
+Test survival rate: 0.000
+Test crash rate: 1.000
+Generation artifacts: 7 checkpoints
+GIF before optimization: experiment_runs\20260602_024603_mutation_0_3\best_lander_before_optimization.gif
+GIF after optimization: experiment_runs\20260602_024603_mutation_0_3\best_lander.gif
