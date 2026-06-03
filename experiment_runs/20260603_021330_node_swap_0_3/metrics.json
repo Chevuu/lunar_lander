@@ -1,0 +1,219 @@
+{
+  "best_model_is_optimized": true,
+  "best_training_fitness": 3625.083877492122,
+  "best_training_fitness_before_optimization": 3625.083877492122,
+  "coefficient_optimization_last_loss": NaN,
+  "generation_artifacts": [
+    {
+      "coefficient_optimization_last_loss": 4.216500570752074,
+      "generation": 10,
+      "gif": {
+        "frames": 85,
+        "path": "experiment_runs\\20260603_021330_node_swap_0_3\\generation_artifacts\\generation_0010_after_optimization.gif",
+        "reward": -65.69639753507275
+      },
+      "model_is_optimized": true,
+      "model_path": "experiment_runs\\20260603_021330_node_swap_0_3\\generation_artifacts\\generation_0010_tree.pkl",
+      "optimized_gif": {
+        "frames": 85,
+        "path": "experiment_runs\\20260603_021330_node_swap_0_3\\generation_artifacts\\generation_0010_after_optimization.gif",
+        "reward": -65.69639753507275
+      },
+      "raw_gif": {
+        "frames": 85,
+        "path": "experiment_runs\\20260603_021330_node_swap_0_3\\generation_artifacts\\generation_0010_before_optimization.gif",
+        "reward": -64.6190797190828
+      },
+      "training_fitness": -70.72354156726503,
+      "tree_size": 23
+    },
+    {
+      "coefficient_optimization_last_loss": 3.7032658166900645,
+      "generation": 20,
+      "gif": {
+        "frames": 95,
+        "path": "experiment_runs\\20260603_021330_node_swap_0_3\\generation_artifacts\\generation_0020_after_optimization.gif",
+        "reward": 26.449788989729342
+      },
+      "model_is_optimized": true,
+      "model_path": "experiment_runs\\20260603_021330_node_swap_0_3\\generation_artifacts\\generation_0020_tree.pkl",
+      "optimized_gif": {
+        "frames": 95,
+        "path": "experiment_runs\\20260603_021330_node_swap_0_3\\generation_artifacts\\generation_0020_after_optimization.gif",
+        "reward": 26.449788989729342
+      },
+      "raw_gif": {
+        "frames": 92,
+        "path": "experiment_runs\\20260603_021330_node_swap_0_3\\generation_artifacts\\generation_0020_before_optimization.gif",
+        "reward": 12.750055509844088
+      },
+      "training_fitness": 179.12369412705345,
+      "tree_size": 23
+    },
+    {
+      "coefficient_optimization_last_loss": 5.919471525024786,
+      "generation": 30,
+      "gif": {
+        "frames": 71,
+        "path": "experiment_runs\\20260603_021330_node_swap_0_3\\generation_artifacts\\generation_0030_after_optimization.gif",
+        "reward": -26.18515178440282
+      },
+      "model_is_optimized": true,
+      "model_path": "experiment_runs\\20260603_021330_node_swap_0_3\\generation_artifacts\\generation_0030_tree.pkl",
+      "optimized_gif": {
+        "frames": 71,
+        "path": "experiment_runs\\20260603_021330_node_swap_0_3\\generation_artifacts\\generation_0030_after_optimization.gif",
+        "reward": -26.18515178440282
+      },
+      "raw_gif": {
+        "frames": 71,
+        "path": "experiment_runs\\20260603_021330_node_swap_0_3\\generation_artifacts\\generation_0030_before_optimization.gif",
+        "reward": -25.961939021463536
+      },
+      "training_fitness": 200.51542199803941,
+      "tree_size": 23
+    },
+    {
+      "coefficient_optimization_last_loss": 3.9304801914795133,
+      "generation": 40,
+      "gif": {
+        "frames": 110,
+        "path": "experiment_runs\\20260603_021330_node_swap_0_3\\generation_artifacts\\generation_0040_after_optimization.gif",
+        "reward": 34.740161246050434
+      },
+      "model_is_optimized": true,
+      "model_path": "experiment_runs\\20260603_021330_node_swap_0_3\\generation_artifacts\\generation_0040_tree.pkl",
+      "optimized_gif": {
+        "frames": 110,
+        "path": "experiment_runs\\20260603_021330_node_swap_0_3\\generation_artifacts\\generation_0040_after_optimization.gif",
+        "reward": 34.740161246050434
+      },
+      "raw_gif": {
+        "frames": 100,
+        "path": "experiment_runs\\20260603_021330_node_swap_0_3\\generation_artifacts\\generation_0040_before_optimization.gif",
+        "reward": 4.977442290604515
+      },
+      "training_fitness": 1332.5864300998567,
+      "tree_size": 62
+    },
+    {
+      "coefficient_optimization_last_loss": 4.644211638808322,
+      "generation": 50,
+      "gif": {
+        "frames": 501,
+        "path": "experiment_runs\\20260603_021330_node_swap_0_3\\generation_artifacts\\generation_0050_after_optimization.gif",
+        "reward": 162.8552236526598
+      },
+      "model_is_optimized": true,
+      "model_path": "experiment_runs\\20260603_021330_node_swap_0_3\\generation_artifacts\\generation_0050_tree.pkl",
+      "optimized_gif": {
+        "frames": 501,
+        "path": "experiment_runs\\20260603_021330_node_swap_0_3\\generation_artifacts\\generation_0050_after_optimization.gif",
+        "reward": 162.8552236526598
+      },
+      "raw_gif": {
+        "frames": 501,
+        "path": "experiment_runs\\20260603_021330_node_swap_0_3\\generation_artifacts\\generation_0050_before_optimization.gif",
+        "reward": 162.8552236526598
+      },
+      "training_fitness": 1938.5065565919538,
+      "tree_size": 62
+    },
+    {
+      "coefficient_optimization_last_loss": 5.591992268173247,
+      "generation": 60,
+      "gif": {
+        "frames": 120,
+        "path": "experiment_runs\\20260603_021330_node_swap_0_3\\generation_artifacts\\generation_0060_after_optimization.gif",
+        "reward": -56.075527640337256
+      },
+      "model_is_optimized": true,
+      "model_path": "experiment_runs\\20260603_021330_node_swap_0_3\\generation_artifacts\\generation_0060_tree.pkl",
+      "optimized_gif": {
+        "frames": 120,
+        "path": "experiment_runs\\20260603_021330_node_swap_0_3\\generation_artifacts\\generation_0060_after_optimization.gif",
+        "reward": -56.075527640337256
+      },
+      "raw_gif": {
+        "frames": 119,
+        "path": "experiment_runs\\20260603_021330_node_swap_0_3\\generation_artifacts\\generation_0060_before_optimization.gif",
+        "reward": -47.71649462322048
+      },
+      "training_fitness": 3502.7296420717134,
+      "tree_size": 62
+    },
+    {
+      "coefficient_optimization_last_loss": NaN,
+      "generation": 70,
+      "gif": {
+        "frames": 60,
+        "path": "experiment_runs\\20260603_021330_node_swap_0_3\\generation_artifacts\\generation_0070_after_optimization.gif",
+        "reward": -122.23873217963893
+      },
+      "model_is_optimized": true,
+      "model_path": "experiment_runs\\20260603_021330_node_swap_0_3\\generation_artifacts\\generation_0070_tree.pkl",
+      "optimized_gif": {
+        "frames": 60,
+        "path": "experiment_runs\\20260603_021330_node_swap_0_3\\generation_artifacts\\generation_0070_after_optimization.gif",
+        "reward": -122.23873217963893
+      },
+      "raw_gif": {
+        "frames": 173,
+        "path": "experiment_runs\\20260603_021330_node_swap_0_3\\generation_artifacts\\generation_0070_before_optimization.gif",
+        "reward": 250.90371134461503
+      },
+      "training_fitness": 3597.6448495372065,
+      "tree_size": 62
+    }
+  ],
+  "sweep": null,
+  "test": {
+    "crash_rate": 1.0,
+    "crashed_episodes": 10,
+    "episode_lengths": [
+      52,
+      63,
+      84,
+      95,
+      58,
+      54,
+      74,
+      62,
+      52,
+      56
+    ],
+    "episode_scores": [
+      -87.83416716892378,
+      -172.2708263273675,
+      -148.51310172995105,
+      -337.0177103944318,
+      -116.38036496103291,
+      -139.96804449120827,
+      -113.65003178323698,
+      -175.86672597122538,
+      -110.67165455445948,
+      -149.77340386262625
+    ],
+    "mean_score": -155.19460312444636,
+    "std_score": 66.20926983657813,
+    "survival_rate": 0.0,
+    "survived_episodes": 0,
+    "terminated_episodes": 10,
+    "total_episodes": 10,
+    "total_score": -1551.9460312444635,
+    "truncated_episodes": 0
+  },
+  "video": {
+    "optimized_gif": {
+      "frames": 88,
+      "path": "experiment_runs\\20260603_021330_node_swap_0_3\\best_lander.gif",
+      "reward": -154.0828906978405
+    },
+    "path": "experiment_runs\\20260603_021330_node_swap_0_3\\best_lander.gif",
+    "raw_gif": {
+      "frames": 147,
+      "path": "experiment_runs\\20260603_021330_node_swap_0_3\\best_lander_before_optimization.gif",
+      "reward": 40.12709034169001
+    }
+  }
+}

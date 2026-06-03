@@ -1,0 +1,12 @@
+Experiment: node_swap_0_1
+Seed: 42
+Best training fitness: -216.997
+Best model saved after coefficient optimization: yes
+Test total score: -609.404
+Test mean score: -60.940
+Test score std: 20.846
+Test survival rate: 0.000
+Test crash rate: 1.000
+Generation artifacts: 7 checkpoints
+GIF before optimization: experiment_runs\20260602_224217_node_swap_0_1\best_lander_before_optimization.gif
+GIF after optimization: experiment_runs\20260602_224217_node_swap_0_1\best_lander.gif
