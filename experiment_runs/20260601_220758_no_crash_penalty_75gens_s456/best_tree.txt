@@ -1,0 +1,6 @@
+[
+  "max(max(((min(x_6,x_4)-(nan+x_1))*max((max((x_1+(nan+(x_0/(x_5*max(x_3,sqrt(abs(x_4))))))),x_4)/(((((sqrt(abs(x_4))+nan)-log(abs(x_2)))/(exp(x_0)*x_6))-(nan-x_3))-(nan+nan))),sqrt(abs(max(nan,x_4))))),sqrt(abs(sqrt(abs((x_1-x_5)))))),sqrt(abs(sqrt(abs((x_1-x_5))))))",
+  "(x_1+((sin(nan)*(x_0*((cos(sqrt(abs(sin((min(((x_6+x_4)*log(abs(x_0))),x_1)*(cos(x_7)*sin(min(x_2,x_5))))))))*max(x_1,x_5))*x_1)))-x_0))",
+  "max(max(max(sqrt(abs(exp(log(abs(x_3))))),log(abs(sqrt(abs(x_3))))),log(abs((((((exp(sqrt(abs(((x_0*exp(x_4))*((x_2-x_2)+max(x_2,x_4))))))*nan)*x_6)+x_3)*x_6)+x_3)))),log(abs((((exp(sqrt(abs(((x_0*exp(x_4))*((x_2-x_2)+max(x_2,x_4))))))*nan)*x_6)+x_3))))",
+  "sqrt(abs(((max(x_6,x_5)/min(x_7,x_7))+max(sin(sin((x_6*x_6))),sin((((sin((x_3-x_6))-min(exp(x_0),x_1))/(x_0+(nan*min(x_3,x_3))))*x_6))))))"
+]

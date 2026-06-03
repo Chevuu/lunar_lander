@@ -1,0 +1,12 @@
+Experiment: no_crash_penalty_75gens_s456
+Seed: 456
+Best training fitness: 1038.562
+Best model saved after coefficient optimization: yes
+Test total score: -1313.411
+Test mean score: -131.341
+Test score std: 40.345
+Test survival rate: 0.000
+Test crash rate: 1.000
+Generation artifacts: 7 checkpoints
+GIF before optimization: experiment_runs/20260601_220758_no_crash_penalty_75gens_s456/best_lander_before_optimization.gif
+GIF after optimization: experiment_runs/20260601_220758_no_crash_penalty_75gens_s456/best_lander.gif

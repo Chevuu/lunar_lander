@@ -1,0 +1,6 @@
+[
+  "max(x_1,(cos(cos(log(abs(cos(x_7)))))-cos(max(log(abs(max(log(abs(log(abs(sin(log(abs(log(abs(x_3))))))))),(min(x_1,x_1)+(x_4/x_3))))),x_4))))",
+  "(((x_5*x_5)-log(abs((min(((log(abs(x_7))+x_7)-x_6),min(log(abs((x_2-x_4))),((3.473452568054199-x_4)-(-4.918381214141846+x_3))))-(cos(x_7)-min(x_6,x_1))))))+(sqrt(abs(x_5))/max(sin((min(x_5,x_0)+(x_1/x_7))),min((x_0*cos(x_0)),(x_1/x_7)))))",
+  "sin(sin(max(sin((cos(min(x_2,(x_3-x_0)))-sin(exp(x_1)))),2.0636938432442005)))",
+  "(sin(sin(-4.950161935363009))*sqrt(abs(max((((x_4+(x_6-x_3))*sin(exp(x_6)))+cos(exp(exp(2.4583497047424316)))),(1.7102034048925334/x_4)))))"
+]

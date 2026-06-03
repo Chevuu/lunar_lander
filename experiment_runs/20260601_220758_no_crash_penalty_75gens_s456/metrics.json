@@ -1,0 +1,219 @@
+{
+  "best_model_is_optimized": true,
+  "best_training_fitness": 1038.5621323194853,
+  "best_training_fitness_before_optimization": 1038.5621323194853,
+  "coefficient_optimization_last_loss": NaN,
+  "generation_artifacts": [
+    {
+      "coefficient_optimization_last_loss": 9292.925560513413,
+      "generation": 10,
+      "gif": {
+        "frames": 89,
+        "path": "experiment_runs/20260601_220758_no_crash_penalty_75gens_s456/generation_artifacts/generation_0010_after_optimization.gif",
+        "reward": -32.27378130141206
+      },
+      "model_is_optimized": true,
+      "model_path": "experiment_runs/20260601_220758_no_crash_penalty_75gens_s456/generation_artifacts/generation_0010_tree.pkl",
+      "optimized_gif": {
+        "frames": 89,
+        "path": "experiment_runs/20260601_220758_no_crash_penalty_75gens_s456/generation_artifacts/generation_0010_after_optimization.gif",
+        "reward": -32.27378130141206
+      },
+      "raw_gif": {
+        "frames": 89,
+        "path": "experiment_runs/20260601_220758_no_crash_penalty_75gens_s456/generation_artifacts/generation_0010_before_optimization.gif",
+        "reward": -32.27378130141206
+      },
+      "training_fitness": -678.0236579387973,
+      "tree_size": 18
+    },
+    {
+      "coefficient_optimization_last_loss": 7901.4409600954195,
+      "generation": 20,
+      "gif": {
+        "frames": 86,
+        "path": "experiment_runs/20260601_220758_no_crash_penalty_75gens_s456/generation_artifacts/generation_0020_after_optimization.gif",
+        "reward": -32.877784593213406
+      },
+      "model_is_optimized": true,
+      "model_path": "experiment_runs/20260601_220758_no_crash_penalty_75gens_s456/generation_artifacts/generation_0020_tree.pkl",
+      "optimized_gif": {
+        "frames": 86,
+        "path": "experiment_runs/20260601_220758_no_crash_penalty_75gens_s456/generation_artifacts/generation_0020_after_optimization.gif",
+        "reward": -32.877784593213406
+      },
+      "raw_gif": {
+        "frames": 86,
+        "path": "experiment_runs/20260601_220758_no_crash_penalty_75gens_s456/generation_artifacts/generation_0020_before_optimization.gif",
+        "reward": -32.877784593213406
+      },
+      "training_fitness": 8.754238037015284,
+      "tree_size": 26
+    },
+    {
+      "coefficient_optimization_last_loss": 7838.546162304132,
+      "generation": 30,
+      "gif": {
+        "frames": 116,
+        "path": "experiment_runs/20260601_220758_no_crash_penalty_75gens_s456/generation_artifacts/generation_0030_after_optimization.gif",
+        "reward": -84.03744383634495
+      },
+      "model_is_optimized": true,
+      "model_path": "experiment_runs/20260601_220758_no_crash_penalty_75gens_s456/generation_artifacts/generation_0030_tree.pkl",
+      "optimized_gif": {
+        "frames": 116,
+        "path": "experiment_runs/20260601_220758_no_crash_penalty_75gens_s456/generation_artifacts/generation_0030_after_optimization.gif",
+        "reward": -84.03744383634495
+      },
+      "raw_gif": {
+        "frames": 117,
+        "path": "experiment_runs/20260601_220758_no_crash_penalty_75gens_s456/generation_artifacts/generation_0030_before_optimization.gif",
+        "reward": -96.86438299486508
+      },
+      "training_fitness": 587.1431660946884,
+      "tree_size": 39
+    },
+    {
+      "coefficient_optimization_last_loss": NaN,
+      "generation": 40,
+      "gif": {
+        "frames": 57,
+        "path": "experiment_runs/20260601_220758_no_crash_penalty_75gens_s456/generation_artifacts/generation_0040_after_optimization.gif",
+        "reward": -95.09379407737495
+      },
+      "model_is_optimized": true,
+      "model_path": "experiment_runs/20260601_220758_no_crash_penalty_75gens_s456/generation_artifacts/generation_0040_tree.pkl",
+      "optimized_gif": {
+        "frames": 57,
+        "path": "experiment_runs/20260601_220758_no_crash_penalty_75gens_s456/generation_artifacts/generation_0040_after_optimization.gif",
+        "reward": -95.09379407737495
+      },
+      "raw_gif": {
+        "frames": 85,
+        "path": "experiment_runs/20260601_220758_no_crash_penalty_75gens_s456/generation_artifacts/generation_0040_before_optimization.gif",
+        "reward": -29.426488914295433
+      },
+      "training_fitness": 988.3333835854166,
+      "tree_size": 38
+    },
+    {
+      "coefficient_optimization_last_loss": NaN,
+      "generation": 50,
+      "gif": {
+        "frames": 74,
+        "path": "experiment_runs/20260601_220758_no_crash_penalty_75gens_s456/generation_artifacts/generation_0050_after_optimization.gif",
+        "reward": -150.54749378821987
+      },
+      "model_is_optimized": true,
+      "model_path": "experiment_runs/20260601_220758_no_crash_penalty_75gens_s456/generation_artifacts/generation_0050_tree.pkl",
+      "optimized_gif": {
+        "frames": 74,
+        "path": "experiment_runs/20260601_220758_no_crash_penalty_75gens_s456/generation_artifacts/generation_0050_after_optimization.gif",
+        "reward": -150.54749378821987
+      },
+      "raw_gif": {
+        "frames": 116,
+        "path": "experiment_runs/20260601_220758_no_crash_penalty_75gens_s456/generation_artifacts/generation_0050_before_optimization.gif",
+        "reward": -89.02274841395
+      },
+      "training_fitness": 1021.4940863370922,
+      "tree_size": 57
+    },
+    {
+      "coefficient_optimization_last_loss": NaN,
+      "generation": 60,
+      "gif": {
+        "frames": 91,
+        "path": "experiment_runs/20260601_220758_no_crash_penalty_75gens_s456/generation_artifacts/generation_0060_after_optimization.gif",
+        "reward": -125.35916245121825
+      },
+      "model_is_optimized": true,
+      "model_path": "experiment_runs/20260601_220758_no_crash_penalty_75gens_s456/generation_artifacts/generation_0060_tree.pkl",
+      "optimized_gif": {
+        "frames": 91,
+        "path": "experiment_runs/20260601_220758_no_crash_penalty_75gens_s456/generation_artifacts/generation_0060_after_optimization.gif",
+        "reward": -125.35916245121825
+      },
+      "raw_gif": {
+        "frames": 501,
+        "path": "experiment_runs/20260601_220758_no_crash_penalty_75gens_s456/generation_artifacts/generation_0060_before_optimization.gif",
+        "reward": 99.74502124831116
+      },
+      "training_fitness": 1038.0877964526328,
+      "tree_size": 56
+    },
+    {
+      "coefficient_optimization_last_loss": NaN,
+      "generation": 70,
+      "gif": {
+        "frames": 57,
+        "path": "experiment_runs/20260601_220758_no_crash_penalty_75gens_s456/generation_artifacts/generation_0070_after_optimization.gif",
+        "reward": -136.80113225404844
+      },
+      "model_is_optimized": true,
+      "model_path": "experiment_runs/20260601_220758_no_crash_penalty_75gens_s456/generation_artifacts/generation_0070_tree.pkl",
+      "optimized_gif": {
+        "frames": 57,
+        "path": "experiment_runs/20260601_220758_no_crash_penalty_75gens_s456/generation_artifacts/generation_0070_after_optimization.gif",
+        "reward": -136.80113225404844
+      },
+      "raw_gif": {
+        "frames": 84,
+        "path": "experiment_runs/20260601_220758_no_crash_penalty_75gens_s456/generation_artifacts/generation_0070_before_optimization.gif",
+        "reward": -15.507417828202847
+      },
+      "training_fitness": 1038.5621323194853,
+      "tree_size": 57
+    }
+  ],
+  "sweep": null,
+  "test": {
+    "crash_rate": 1.0,
+    "crashed_episodes": 10,
+    "episode_lengths": [
+      62,
+      102,
+      56,
+      76,
+      76,
+      78,
+      55,
+      69,
+      68,
+      61
+    ],
+    "episode_scores": [
+      -134.51990875780865,
+      -23.953436497031504,
+      -140.18749918811477,
+      -139.39310825772966,
+      -173.51075757966532,
+      -161.26802563117081,
+      -129.7754330064791,
+      -168.53811976839427,
+      -108.42036067664682,
+      -133.84439294376565
+    ],
+    "mean_score": -131.34110423068066,
+    "std_score": 40.344647688286415,
+    "survival_rate": 0.0,
+    "survived_episodes": 0,
+    "terminated_episodes": 10,
+    "total_episodes": 10,
+    "total_score": -1313.4110423068066,
+    "truncated_episodes": 0
+  },
+  "video": {
+    "optimized_gif": {
+      "frames": 58,
+      "path": "experiment_runs/20260601_220758_no_crash_penalty_75gens_s456/best_lander.gif",
+      "reward": -114.82821335330951
+    },
+    "path": "experiment_runs/20260601_220758_no_crash_penalty_75gens_s456/best_lander.gif",
+    "raw_gif": {
+      "frames": 78,
+      "path": "experiment_runs/20260601_220758_no_crash_penalty_75gens_s456/best_lander_before_optimization.gif",
+      "reward": -57.47683719720693
+    }
+  }
+}

@@ -78,3 +78,82 @@ notebook cell:
 For the most reproducible runs, use `--n-jobs 1`. Parallel fitness evaluation is
 faster, but random tree initialization can be less deterministic across worker
 processes.
+
+### How `run_experiment.py` works
+
+`run_experiment.py` is the main script for repeatable runs outside the notebook.
+It creates a new timestamped directory for every run, stores the requested
+configuration, trains the genetic programming population, evaluates the final
+best model, and writes the metrics/artifacts needed for analysis and the
+presentation.
+
+In `train` mode, the script:
+
+1. Loads defaults from `config.py`, optionally overridden by CLI arguments or
+   `--config-json`.
+2. Sets the runtime seed and training hyperparameters.
+3. Builds the GP leaf nodes and evolves the population for `--max-gens`.
+4. Evaluates every individual over `--num-episodes` episodes per generation.
+5. Records generation-level fitness, survival/crash, and variance metrics in
+   `generation_history.csv`.
+6. Saves optimized model checkpoints and before/after optimization GIFs every
+   `--artifact-interval` generations. The default interval is `10`.
+7. Selects the best evolutionary tree, optimizes its constants, evaluates it on
+   the test episodes, and saves the optimized final model.
+
+In `sweep` mode, the script uses Optuna to search hyperparameters and writes the
+trial results. In `sweep-train` mode, it first runs the sweep and then trains one
+final model with the best found parameters.
+
+The final model files are:
+
+- `best_tree.pkl`: optimized final model.
+- `best_tree.txt`: readable representation of the optimized final model.
+- `best_lander_before_optimization.gif`: final best tree before coefficient
+  optimization.
+- `best_lander.gif`: final best tree after coefficient optimization.
+
+The periodic checkpoint files are stored in `generation_artifacts/`:
+
+- `generation_0010_tree.pkl`: optimized model from generation 10.
+- `generation_0010_before_optimization.gif`: raw evolutionary tree before
+  coefficient optimization.
+- `generation_0010_after_optimization.gif`: same tree after coefficient
+  optimization.
+
+### `generation_history.csv` columns
+
+Each row summarizes the whole population at one generation. Generation `0` is
+the initialized population before any evolutionary step. Later rows are after
+each generation has been evaluated.
+
+An episode is counted as crashed when the environment terminates and the final
+reward is `<= -100`, which is the Lunar Lander crash penalty. Any episode that
+does not meet that crash condition is counted as survived. An agent is counted
+as survived only if it has zero crashed episodes during its fitness evaluation.
+
+| Column | Meaning |
+| --- | --- |
+| `generation` | Generation index. `0` is the initial population. |
+| `best_fitness` | Highest fitness value in the population for this generation. |
+| `mean_fitness` | Average fitness across all agents in the population. |
+| `std_fitness` | Standard deviation of fitness across the population. Lower values mean agents are more consistent with each other. |
+| `best_tree_size` | Number of nodes in the best-fitness tree. |
+| `mean_tree_size` | Average number of nodes across all trees in the population. |
+| `population_size` | Number of agents/trees evaluated in the generation. |
+| `survived_agents` | Number of agents with zero crashed episodes. |
+| `crashed_agents` | Number of agents with at least one crashed episode. |
+| `agent_survival_rate` | `survived_agents / population_size`. |
+| `agent_crash_rate` | `crashed_agents / population_size`. |
+| `total_episodes` | Total evaluated episodes in this generation, normally `population_size * num_episodes`. |
+| `survived_episodes` | Number of episodes not classified as crashes. |
+| `crashed_episodes` | Number of episodes classified as crashes. |
+| `episode_survival_rate` | `survived_episodes / total_episodes`. |
+| `episode_crash_rate` | `crashed_episodes / total_episodes`. |
+| `mean_episode_score` | Average episode reward across every episode played by every agent in the generation. |
+| `std_episode_score` | Standard deviation of those episode rewards. Lower values mean episode outcomes are more consistent. |
+
+Fitness is the sum of rewards collected across the training episodes for one
+agent. Because each agent is evaluated over multiple episodes, `mean_episode_score`
+is useful for understanding typical per-episode behavior, while `best_fitness`
+shows which individual the evolutionary process is selecting.
