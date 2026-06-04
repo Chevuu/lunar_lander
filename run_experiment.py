@@ -4,7 +4,7 @@ import csv
 import json
 import os
 import pickle
-import random
+import signal
 import subprocess
 from datetime import datetime
 from pathlib import Path
@@ -73,15 +73,34 @@ def parse_args():
 
     add_arg(parser, "test_episodes", defaults.get("test_episodes", config.TEST_EPISODES), type=int)
     add_arg(parser, "test_duration", defaults.get("test_duration", config.TEST_EPISODE_DURATION), type=int)
-    add_arg(parser, "video", defaults.get("video", True), action=argparse.BooleanOptionalAction)
-    add_arg(parser, "video_duration", defaults.get("video_duration", config.TEST_EPISODE_DURATION), type=int)
-    add_arg(parser, "video_seed_offset", defaults.get("video_seed_offset", 20_000), type=int)
-    add_arg(parser, "artifact_interval", defaults.get("artifact_interval", 10), type=int)
+    add_arg(parser, "video", defaults.get("video", config.VIDEO), action=argparse.BooleanOptionalAction)
+    add_arg(parser, "save_raw_gifs", defaults.get("save_raw_gifs", config.SAVE_RAW_GIFS), action=argparse.BooleanOptionalAction)
+    add_arg(parser, "plots", defaults.get("plots", config.PLOTS), action=argparse.BooleanOptionalAction)
+    add_arg(parser, "video_duration", defaults.get("video_duration", config.VIDEO_EPISODE_DURATION), type=int)
+    add_arg(parser, "video_seed_offset", defaults.get("video_seed_offset", config.VIDEO_SEED_OFFSET), type=int)
+    add_arg(parser, "artifact_interval", defaults.get("artifact_interval", config.ARTIFACT_INTERVAL), type=int)
 
     add_arg(parser, "random_seeds", defaults.get("random_seeds", config.RANDOM_SEEDS), action=argparse.BooleanOptionalAction)
+    add_arg(parser, "seed_stride", defaults.get("seed_stride", config.SEED_STRIDE), type=int)
     add_arg(parser, "crash_penalty", defaults.get("crash_penalty", config.CRASH_PENALTY), action=argparse.BooleanOptionalAction)
+    add_arg(parser, "crash_penalty_weight", defaults.get("crash_penalty_weight", config.CRASH_PENALTY_WEIGHT), type=float)
     add_arg(parser, "parsimony", defaults.get("parsimony", config.PARSIMONY), action=argparse.BooleanOptionalAction)
+    add_arg(parser, "parsimony_weight", defaults.get("parsimony_weight", config.PARSIMONY_WEIGHT), type=float)
     add_arg(parser, "time_pressure", defaults.get("time_pressure", config.TIME_PRESSURE), action=argparse.BooleanOptionalAction)
+    add_arg(parser, "time_pressure_weight", defaults.get("time_pressure_weight", config.TIME_PRESSURE_WEIGHT), type=float)
+
+    add_arg(parser, "validation_selection", defaults.get("validation_selection", config.VALIDATION_SELECTION), action=argparse.BooleanOptionalAction)
+    add_arg(parser, "validation_episodes", defaults.get("validation_episodes", config.VALIDATION_EPISODES), type=int)
+    add_arg(parser, "validation_duration", defaults.get("validation_duration", config.VALIDATION_EPISODE_DURATION), type=int)
+    add_arg(parser, "validation_interval", defaults.get("validation_interval", config.VALIDATION_INTERVAL), type=int)
+    add_arg(parser, "validation_candidates", defaults.get("validation_candidates", config.VALIDATION_CANDIDATES), type=int)
+    add_arg(parser, "validation_seed_offset", defaults.get("validation_seed_offset", config.VALIDATION_SEED_OFFSET), type=int)
+
+    add_arg(parser, "save_best_each_gen", defaults.get("save_best_each_gen", config.SAVE_BEST_EACH_GEN), action=argparse.BooleanOptionalAction)
+    add_arg(parser, "graceful_stop", defaults.get("graceful_stop", config.GRACEFUL_STOP), action=argparse.BooleanOptionalAction)
+    add_arg(parser, "gate_coeff_optimization", defaults.get("gate_coeff_optimization", config.GATE_COEFF_OPTIMIZATION), action=argparse.BooleanOptionalAction)
+    add_arg(parser, "coeff_gate_episodes", defaults.get("coeff_gate_episodes", config.COEFF_GATE_EPISODES), type=int)
+    add_arg(parser, "coeff_gate_seed_offset", defaults.get("coeff_gate_seed_offset", config.COEFF_GATE_SEED_OFFSET), type=int)
 
     add_arg(parser, "n_trials", defaults.get("n_trials", sweep_config.N_TRIALS), type=int)
     add_arg(parser, "sweep_gens", defaults.get("sweep_gens", sweep_config.SWEEP_GENS), type=int)
@@ -100,6 +119,14 @@ def make_run_dir(args):
 
 def is_crash(terminated, final_reward):
     return bool(terminated and final_reward <= -100.0)
+
+
+def validation_seed_for_generation(args, generation):
+    return args.seed + args.validation_seed_offset + generation * args.seed_stride
+
+
+def coeff_gate_seed(args):
+    return args.seed + args.coeff_gate_seed_offset
 
 
 def run_policy_episodes(tree, episodes, duration, seed, collect_memory=False, render=False, ignore_done=False):
@@ -184,11 +211,11 @@ def make_fitness_fn(num_episodes, episode_duration, seed):
         )
         fitness = stats["total_score"]
         if config.CRASH_PENALTY:
-            fitness -= 100 * stats["crashed_episodes"]
+            fitness -= config.CRASH_PENALTY_WEIGHT * stats["crashed_episodes"]
         if config.PARSIMONY:
-            fitness -= 1 * len(multitree)
+            fitness -= config.PARSIMONY_WEIGHT * len(multitree)
         if config.TIME_PRESSURE:
-            fitness -= 0.1 * sum(stats["episode_lengths"])
+            fitness -= config.TIME_PRESSURE_WEIGHT * sum(stats["episode_lengths"])
         return fitness, memory, stats
 
     return fn
@@ -211,10 +238,31 @@ def update_runtime_config(args):
     config.TEST_EPISODES = args.test_episodes
     config.TEST_EPISODE_DURATION = args.test_duration
     config.VERBOSE = args.verbose
-    config.RANDOM_SEEDS = args.random_seeds
-    config.CRASH_PENALTY = args.crash_penalty
-    config.PARSIMONY = args.parsimony
-    config.TIME_PRESSURE = args.time_pressure
+    config.VIDEO = getattr(args, "video", config.VIDEO)
+    config.SAVE_RAW_GIFS = getattr(args, "save_raw_gifs", config.SAVE_RAW_GIFS)
+    config.PLOTS = getattr(args, "plots", config.PLOTS)
+    config.VIDEO_EPISODE_DURATION = getattr(args, "video_duration", config.VIDEO_EPISODE_DURATION)
+    config.VIDEO_SEED_OFFSET = getattr(args, "video_seed_offset", config.VIDEO_SEED_OFFSET)
+    config.ARTIFACT_INTERVAL = getattr(args, "artifact_interval", config.ARTIFACT_INTERVAL)
+    config.RANDOM_SEEDS = getattr(args, "random_seeds", config.RANDOM_SEEDS)
+    config.SEED_STRIDE = getattr(args, "seed_stride", config.SEED_STRIDE)
+    config.CRASH_PENALTY = getattr(args, "crash_penalty", config.CRASH_PENALTY)
+    config.CRASH_PENALTY_WEIGHT = getattr(args, "crash_penalty_weight", config.CRASH_PENALTY_WEIGHT)
+    config.PARSIMONY = getattr(args, "parsimony", config.PARSIMONY)
+    config.PARSIMONY_WEIGHT = getattr(args, "parsimony_weight", config.PARSIMONY_WEIGHT)
+    config.TIME_PRESSURE = getattr(args, "time_pressure", config.TIME_PRESSURE)
+    config.TIME_PRESSURE_WEIGHT = getattr(args, "time_pressure_weight", config.TIME_PRESSURE_WEIGHT)
+    config.VALIDATION_SELECTION = getattr(args, "validation_selection", config.VALIDATION_SELECTION)
+    config.VALIDATION_EPISODES = getattr(args, "validation_episodes", config.VALIDATION_EPISODES)
+    config.VALIDATION_EPISODE_DURATION = getattr(args, "validation_duration", config.VALIDATION_EPISODE_DURATION)
+    config.VALIDATION_INTERVAL = getattr(args, "validation_interval", config.VALIDATION_INTERVAL)
+    config.VALIDATION_CANDIDATES = getattr(args, "validation_candidates", config.VALIDATION_CANDIDATES)
+    config.VALIDATION_SEED_OFFSET = getattr(args, "validation_seed_offset", config.VALIDATION_SEED_OFFSET)
+    config.SAVE_BEST_EACH_GEN = getattr(args, "save_best_each_gen", config.SAVE_BEST_EACH_GEN)
+    config.GRACEFUL_STOP = getattr(args, "graceful_stop", config.GRACEFUL_STOP)
+    config.GATE_COEFF_OPTIMIZATION = getattr(args, "gate_coeff_optimization", config.GATE_COEFF_OPTIMIZATION)
+    config.COEFF_GATE_EPISODES = getattr(args, "coeff_gate_episodes", config.COEFF_GATE_EPISODES)
+    config.COEFF_GATE_SEED_OFFSET = getattr(args, "coeff_gate_seed_offset", config.COEFF_GATE_SEED_OFFSET)
 
 
 def build_leaf_nodes(num_constants):
@@ -230,9 +278,13 @@ def merge_memories(memories):
     return memory
 
 
-def summarize_population(generation, population):
+def summarize_population(generation, population, best_fitness_so_far=None):
     fitnesses = np.array([float(t.fitness) for t in population], dtype=float)
     sizes = np.array([int(len(t)) for t in population], dtype=int)
+    best_idx = int(np.argmax(fitnesses))
+    best_individual = population[best_idx]
+    best_stats = getattr(best_individual, "_episode_stats", None)
+    best_total_episodes = best_stats["total_episodes"] if best_stats else 1
     episode_scores = []
     total_episodes = 0
     survived_episodes = 0
@@ -255,10 +307,12 @@ def summarize_population(generation, population):
 
     return {
         "generation": generation,
-        "best_fitness": float(np.max(fitnesses)),
+        "best_fitness": float(fitnesses[best_idx]),
+        "best_fitness_so_far": float(best_fitness_so_far) if best_fitness_so_far is not None else float(fitnesses[best_idx]),
+        "best_lander_fitness": float(fitnesses[best_idx] / best_total_episodes) if best_total_episodes else float(fitnesses[best_idx]),
         "mean_fitness": float(np.mean(fitnesses)),
         "std_fitness": float(np.std(fitnesses)),
-        "best_tree_size": int(sizes[np.argmax(fitnesses)]),
+        "best_tree_size": int(sizes[best_idx]),
         "mean_tree_size": float(np.mean(sizes)),
         "population_size": int(len(population)),
         "survived_agents": survived_agents,
@@ -276,12 +330,33 @@ def summarize_population(generation, population):
 
 
 CSV_FIELDNAMES = [
-    "generation", "best_fitness", "mean_fitness", "std_fitness",
+    "generation", "best_fitness", "best_fitness_so_far", "best_lander_fitness",
+    "mean_fitness", "std_fitness",
     "best_tree_size", "mean_tree_size", "population_size",
     "survived_agents", "crashed_agents", "agent_survival_rate", "agent_crash_rate",
     "total_episodes", "survived_episodes", "crashed_episodes",
     "episode_survival_rate", "episode_crash_rate", "mean_episode_score", "std_episode_score",
+    "validation_best_score", "validation_best_mean", "validation_best_std",
+    "validation_best_survival_rate", "best_validation_score_so_far",
 ]
+
+
+class GracefulStopRequested(Exception):
+    pass
+
+
+def atomic_pickle(path, data):
+    tmp_path = path.with_suffix(path.suffix + ".tmp")
+    with open(tmp_path, "wb") as f:
+        pickle.dump(data, f)
+    os.replace(tmp_path, path)
+
+
+def atomic_json(path, data):
+    tmp_path = path.with_suffix(path.suffix + ".tmp")
+    with open(tmp_path, "w") as f:
+        json.dump(data, f, indent=2, sort_keys=True)
+    os.replace(tmp_path, path)
 
 
 class ExperimentEvolution(Evolution):
@@ -292,14 +367,116 @@ class ExperimentEvolution(Evolution):
         self.generation_records = []
         self.generation_artifacts = []
         self.elite = None
+        self.best_training = None
+        self.best_validation = None
+        self.best_validation_score = None
+        self.validation_records = []
+        self.interrupted = False
+        self.stop_reason = None
 
     def _evaluate_population(self, population):
-        results = Parallel(n_jobs=self.n_jobs)(delayed(self.fitness_function)(t) for t in population)
+        results = Parallel(n_jobs=self.n_jobs)(
+            delayed(self.fitness_function)(t) for t in population
+        )
         fitnesses, memories, episode_stats = list(map(list, zip(*results)))
         for individual, fitness, stats in zip(population, fitnesses, episode_stats):
             individual.fitness = fitness
             individual._episode_stats = stats
         return merge_memories(memories)
+
+    def _update_best_training(self, tree, generation):
+        if self.best_training is None or tree.fitness > self.best_training.fitness:
+            self.best_training = copy.deepcopy(tree)
+            self.best_training._best_generation = generation
+
+    def _validation_enabled(self, generation):
+        args = self.run_args
+        if args is None or not args.validation_selection:
+            return False
+        if args.validation_interval <= 0:
+            return False
+        return generation % args.validation_interval == 0
+
+    def _validate_generation(self, generation, population, record):
+        if not self._validation_enabled(generation):
+            return
+
+        args = self.run_args
+        num_candidates = max(1, min(args.validation_candidates, len(population)))
+        candidates = sorted(population, key=lambda t: t.fitness, reverse=True)[:num_candidates]
+        eval_seed = validation_seed_for_generation(args, generation)
+
+        generation_best = None
+        generation_best_stats = None
+        generation_best_score = None
+        for candidate in candidates:
+            stats = evaluate_tree(
+                candidate,
+                episodes=args.validation_episodes,
+                duration=args.validation_duration,
+                seed=eval_seed,
+            )
+            score = stats["total_score"]
+            if generation_best_score is None or score > generation_best_score:
+                generation_best = candidate
+                generation_best_stats = stats
+                generation_best_score = score
+
+        record.update(
+            {
+                "validation_best_score": float(generation_best_score),
+                "validation_best_mean": float(generation_best_stats["mean_score"]),
+                "validation_best_std": float(generation_best_stats["std_score"]),
+                "validation_best_survival_rate": float(generation_best_stats["survival_rate"]),
+            }
+        )
+        self.validation_records.append(
+            {
+                "generation": generation,
+                "score": float(generation_best_score),
+                "stats": generation_best_stats,
+                "training_fitness": float(generation_best.fitness),
+                "tree_size": int(len(generation_best)),
+            }
+        )
+
+        if self.best_validation_score is None or generation_best_score > self.best_validation_score:
+            self.best_validation = copy.deepcopy(generation_best)
+            self.best_validation._best_generation = generation
+            self.best_validation._validation_stats = generation_best_stats
+            self.best_validation_score = float(generation_best_score)
+            self._write_best_files(generation, latest_tree=generation_best)
+
+        record["best_validation_score_so_far"] = self.best_validation_score
+
+    def _write_best_files(self, generation, latest_tree=None):
+        args = self.run_args
+        if self.run_dir is None or args is None:
+            return
+        if not (args.save_best_each_gen or args.validation_selection):
+            return
+
+        checkpoint_dir = self.run_dir / "checkpoints"
+        checkpoint_dir.mkdir(exist_ok=True)
+
+        metadata = {
+            "generation": generation,
+            "best_training_fitness": float(self.best_training.fitness) if self.best_training else None,
+            "best_training_generation": getattr(self.best_training, "_best_generation", None),
+            "best_validation_score": self.best_validation_score,
+            "best_validation_generation": getattr(self.best_validation, "_best_generation", None),
+        }
+
+        if latest_tree is not None:
+            atomic_pickle(checkpoint_dir / "latest_tree.pkl", latest_tree)
+            metadata["latest_training_fitness"] = float(latest_tree.fitness)
+
+        if self.best_training is not None:
+            atomic_pickle(checkpoint_dir / "best_training_tree.pkl", self.best_training)
+        if self.best_validation is not None:
+            atomic_pickle(checkpoint_dir / "best_validation_tree.pkl", self.best_validation)
+
+        atomic_json(checkpoint_dir / "checkpoint_metadata.json", metadata)
 
     def _append_csv_row(self, record):
         if self.run_dir is None:
@@ -322,29 +499,34 @@ class ExperimentEvolution(Evolution):
 
         prefix = f"generation_{generation:04d}"
         raw_tree = copy.deepcopy(tree)
-        optimized_tree = copy.deepcopy(tree)
-        coeff_loss = optimize_constants(optimized_tree, self.memory, args)
+        optimized_tree, coeff_loss, coeff_gate = optimize_with_optional_gate(
+            raw_tree,
+            self.memory,
+            args,
+            gate_seed=args.seed + args.coeff_gate_seed_offset + generation * args.seed_stride,
+        )
 
         pkl_path = artifact_dir / f"{prefix}_tree.pkl"
-        with open(pkl_path, "wb") as f:
-            pickle.dump(optimized_tree, f)
+        atomic_pickle(pkl_path, optimized_tree)
 
         artifact = {
             "generation": generation,
             "training_fitness": float(raw_tree.fitness),
             "tree_size": int(len(optimized_tree)),
-            "model_is_optimized": True,
+            "model_is_optimized": coeff_gate is None or bool(coeff_gate.get("kept_optimized", True)),
             "coefficient_optimization_last_loss": coeff_loss,
+            "coefficient_gate": coeff_gate,
             "model_path": str(pkl_path),
         }
         if args.video:
-            raw_gif_path = artifact_dir / f"{prefix}_before_optimization.gif"
-            raw_gif_info = render_gif(raw_tree, raw_gif_path, seed=args.seed + args.video_seed_offset + generation, duration=args.video_duration)
-            raw_gif_info["path"] = str(raw_gif_path)
+            if args.save_raw_gifs:
+                raw_gif_path = artifact_dir / f"{prefix}_before_optimization.gif"
+                raw_gif_info = render_gif(raw_tree, raw_gif_path, seed=args.seed + args.video_seed_offset + generation, duration=args.video_duration)
+                raw_gif_info["path"] = str(raw_gif_path)
+                artifact["raw_gif"] = raw_gif_info
             optimized_gif_path = artifact_dir / f"{prefix}_after_optimization.gif"
             optimized_gif_info = render_gif(optimized_tree, optimized_gif_path, seed=args.seed + args.video_seed_offset + generation, duration=args.video_duration)
             optimized_gif_info["path"] = str(optimized_gif_path)
-            artifact["raw_gif"] = raw_gif_info
             artifact["optimized_gif"] = optimized_gif_info
             artifact["gif"] = optimized_gif_info
 
@@ -370,9 +552,12 @@ class ExperimentEvolution(Evolution):
         best = self.population[np.argmax([t.fitness for t in self.population])]
         self.best_of_gens.append(copy.deepcopy(best))
         self.elite = copy.deepcopy(best)
-        record = summarize_population(0, self.population)
+        self._update_best_training(best, generation=0)
+        record = summarize_population(0, self.population, self.best_training.fitness)
+        self._validate_generation(0, self.population, record)
         self.generation_records.append(record)
         self._append_csv_row(record)
+        self._write_best_files(0, latest_tree=best)
 
     def _perform_generation(self):
         sel_fun = self.selection["fun"]
@@ -395,23 +580,29 @@ class ExperimentEvolution(Evolution):
         self.memory = generation_memory + self.memory
         self.num_evals += self.pop_size
 
+        generation_best = offspring_population[np.argmax([t.fitness for t in offspring_population])]
+        self.num_gens += 1
+        self.best_of_gens.append(copy.deepcopy(generation_best))
+        self._update_best_training(generation_best, generation=self.num_gens)
+
+        record = summarize_population(self.num_gens, offspring_population, self.best_training.fitness)
+        self._validate_generation(self.num_gens, offspring_population, record)
+        self.generation_records.append(record)
+        self._append_csv_row(record)
+        self._write_best_files(self.num_gens, latest_tree=generation_best)
+
         if self.elite is not None:
             elite_candidate = copy.deepcopy(self.elite)
             if config.RANDOM_SEEDS:
-                elite_candidate.fitness, _, elite_candidate._episode_stats = self.fitness_function(elite_candidate)
+                elite_candidate.fitness, _, elite_candidate._episode_stats = self.fitness_function(
+                    elite_candidate
+                )
             worst_idx = int(np.argmin([t.fitness for t in offspring_population]))
             offspring_population[worst_idx] = elite_candidate
 
         self.population = offspring_population
-        self.num_gens += 1
         best = self.population[np.argmax([t.fitness for t in self.population])]
-        self.best_of_gens.append(copy.deepcopy(best))
-
-        if self.elite is None or best.fitness > self.elite.fitness:
-            self.elite = copy.deepcopy(best)
-        record = summarize_population(self.num_gens, self.population)
-        self.generation_records.append(record)
-        self._append_csv_row(record)
+        self.elite = copy.deepcopy(best)
 
         if self.run_args and self.run_args.artifact_interval > 0 and self.num_gens % self.run_args.artifact_interval == 0:
             self._write_checkpoint(self.num_gens)
@@ -464,6 +655,49 @@ def evaluate_tree(tree, episodes, duration, seed):
     return stats
 
 
+def optimize_with_optional_gate(raw_tree, memory, args, gate_seed=None):
+    optimized_tree = copy.deepcopy(raw_tree)
+    coeff_loss = optimize_constants(optimized_tree, memory, args)
+
+    if not args.gate_coeff_optimization:
+        return optimized_tree, coeff_loss, None
+
+    gate_info = {
+        "enabled": True,
+        "kept_optimized": False,
+        "raw_score": None,
+        "optimized_score": None,
+        "reason": None,
+    }
+    if coeff_loss is None:
+        gate_info["reason"] = "no_constants_or_not_enough_memory"
+        return copy.deepcopy(raw_tree), coeff_loss, gate_info
+
+    seed = gate_seed if gate_seed is not None else coeff_gate_seed(args)
+    raw_eval = evaluate_tree(
+        raw_tree,
+        episodes=args.coeff_gate_episodes,
+        duration=args.validation_duration,
+        seed=seed,
+    )
+    optimized_eval = evaluate_tree(
+        optimized_tree,
+        episodes=args.coeff_gate_episodes,
+        duration=args.validation_duration,
+        seed=seed,
+    )
+    gate_info["raw_score"] = float(raw_eval["total_score"])
+    gate_info["optimized_score"] = float(optimized_eval["total_score"])
+
+    if optimized_eval["total_score"] >= raw_eval["total_score"]:
+        gate_info["kept_optimized"] = True
+        gate_info["reason"] = "optimized_validation_score_not_worse"
+        return optimized_tree, coeff_loss, gate_info
+
+    gate_info["reason"] = "raw_validation_score_better"
+    return copy.deepcopy(raw_tree), coeff_loss, gate_info
+
+
 def run_training(args, run_dir):
     update_runtime_config(args)
     set_seed(args.seed)
@@ -483,44 +717,48 @@ def run_training(args, run_dir):
         run_args=args,
         run_dir=run_dir,
     )
-    evo.evolve()
+    previous_sigterm_handler = None
+    if args.graceful_stop:
+        previous_sigterm_handler = signal.getsignal(signal.SIGTERM)
 
-    raw_best = copy.deepcopy(max(evo.best_of_gens, key=lambda t: t.fitness))
-    best = copy.deepcopy(raw_best)
-    coeff_loss = optimize_constants(best, evo.memory, args)
+        def handle_sigterm(signum, frame):
+            raise GracefulStopRequested(f"signal_{signum}")
+
+        signal.signal(signal.SIGTERM, handle_sigterm)
+
+    try:
+        evo.evolve()
+    except (KeyboardInterrupt, GracefulStopRequested) as exc:
+        if not args.graceful_stop or not evo.best_of_gens:
+            raise
+        evo.interrupted = True
+        evo.stop_reason = "keyboard_interrupt" if isinstance(exc, KeyboardInterrupt) else str(exc)
+        print(f"\nGraceful stop requested after generation {evo.num_gens}; saving completed results.")
+    finally:
+        if previous_sigterm_handler is not None:
+            signal.signal(signal.SIGTERM, previous_sigterm_handler)
+
+    if args.validation_selection and evo.best_validation is not None:
+        raw_best = copy.deepcopy(evo.best_validation)
+    elif evo.best_training is not None:
+        raw_best = copy.deepcopy(evo.best_training)
+    else:
+        raw_best = copy.deepcopy(max(evo.best_of_gens, key=lambda t: t.fitness))
+
+    best, coeff_loss, coeff_gate = optimize_with_optional_gate(raw_best, evo.memory, args)
     evaluation = evaluate_tree(
         best,
         episodes=args.test_episodes,
         duration=args.test_duration,
         seed=args.seed + 10_000,
     )
-    return raw_best, best, evo, coeff_loss, evaluation
+    return raw_best, best, evo, coeff_loss, coeff_gate, evaluation
 
 
 def write_generation_history(evo, path):
     if getattr(evo, "generation_records", None):
-        fieldnames = [
-            "generation",
-            "best_fitness",
-            "mean_fitness",
-            "std_fitness",
-            "best_tree_size",
-            "mean_tree_size",
-            "population_size",
-            "survived_agents",
-            "crashed_agents",
-            "agent_survival_rate",
-            "agent_crash_rate",
-            "total_episodes",
-            "survived_episodes",
-            "crashed_episodes",
-            "episode_survival_rate",
-            "episode_crash_rate",
-            "mean_episode_score",
-            "std_episode_score",
-        ]
         with open(path, "w", newline="") as f:
-            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer = csv.DictWriter(f, fieldnames=CSV_FIELDNAMES)
             writer.writeheader()
             writer.writerows(evo.generation_records)
         return
@@ -578,29 +816,35 @@ def save_generation_artifacts(args, run_dir, evo):
 
         prefix = f"generation_{generation:04d}"
         raw_tree = copy.deepcopy(tree)
-        optimized_tree = copy.deepcopy(tree)
-        coeff_loss = optimize_constants(optimized_tree, evo.memory, args)
+        optimized_tree, coeff_loss, coeff_gate = optimize_with_optional_gate(
+            raw_tree,
+            evo.memory,
+            args,
+            gate_seed=args.seed + args.coeff_gate_seed_offset + generation * args.seed_stride,
+        )
         pkl_path = artifact_dir / f"{prefix}_tree.pkl"
-        with open(pkl_path, "wb") as f:
-            pickle.dump(optimized_tree, f)
+        atomic_pickle(pkl_path, optimized_tree)
 
         artifact = {
             "generation": generation,
             "training_fitness": float(raw_tree.fitness),
             "tree_size": int(len(optimized_tree)),
-            "model_is_optimized": True,
+            "model_is_optimized": coeff_gate is None or bool(coeff_gate.get("kept_optimized", True)),
             "coefficient_optimization_last_loss": coeff_loss,
+            "coefficient_gate": coeff_gate,
             "model_path": str(pkl_path),
         }
         if args.video:
-            raw_gif_path = artifact_dir / f"{prefix}_before_optimization.gif"
-            raw_gif_info = render_gif(
-                raw_tree,
-                raw_gif_path,
-                seed=args.seed + args.video_seed_offset + generation,
-                duration=args.video_duration,
-            )
-            raw_gif_info["path"] = str(raw_gif_path)
+            if args.save_raw_gifs:
+                raw_gif_path = artifact_dir / f"{prefix}_before_optimization.gif"
+                raw_gif_info = render_gif(
+                    raw_tree,
+                    raw_gif_path,
+                    seed=args.seed + args.video_seed_offset + generation,
+                    duration=args.video_duration,
+                )
+                raw_gif_info["path"] = str(raw_gif_path)
+                artifact["raw_gif"] = raw_gif_info
 
             optimized_gif_path = artifact_dir / f"{prefix}_after_optimization.gif"
             optimized_gif_info = render_gif(
@@ -610,7 +854,6 @@ def save_generation_artifacts(args, run_dir, evo):
                 duration=args.video_duration,
             )
             optimized_gif_info["path"] = str(optimized_gif_path)
-            artifact["raw_gif"] = raw_gif_info
             artifact["optimized_gif"] = optimized_gif_info
             artifact["gif"] = optimized_gif_info
         artifacts.append(artifact)
@@ -682,8 +925,10 @@ def run_sweep(args, run_dir):
         trial_args.gamma = trial.suggest_float("gamma", sweep_config.GAMMA_MIN, sweep_config.GAMMA_MAX)
         trial_args.max_gens = args.sweep_gens
         trial_args.num_episodes = args.sweep_episodes
+        trial_args.video = False
+        trial_args.artifact_interval = 0
 
-        _, _, _, _, evaluation = run_training(trial_args)
+        _, _, _, _, _, evaluation = run_training(trial_args, run_dir=None)
         score = evaluation["total_score"]
         write_header = not sweep_csv.exists()
         with open(sweep_csv, "a", newline="") as f:
@@ -736,7 +981,7 @@ def apply_sweep_params(args, sweep_result):
     return args
 
 
-def save_training_outputs(args, run_dir, raw_best, best, evo, coeff_loss, evaluation, sweep_result=None):
+def save_training_outputs(args, run_dir, raw_best, best, evo, coeff_loss, coeff_gate, evaluation, sweep_result=None):
     write_json(run_dir / "run_config.json", args_to_dict(args))
     # generation_history.csv and generation_artifacts are written incrementally during training
     csv_path = run_dir / "generation_history.csv"
@@ -748,20 +993,10 @@ def save_training_outputs(args, run_dir, raw_best, best, evo, coeff_loss, evalua
         f.write(json.dumps(best.get_readable_repr(), indent=2))
         f.write("\n")
 
-    with open(run_dir / "best_tree.pkl", "wb") as f:
-        pickle.dump(best, f)
+    atomic_pickle(run_dir / "best_tree.pkl", best)
 
     video_info = None
     if args.video:
-        raw_gif_path = run_dir / "best_lander_before_optimization.gif"
-        raw_video_info = render_gif(
-            raw_best,
-            raw_gif_path,
-            seed=args.seed + args.video_seed_offset,
-            duration=args.video_duration,
-        )
-        raw_video_info["path"] = str(raw_gif_path)
-
         optimized_gif_path = run_dir / "best_lander.gif"
         optimized_video_info = render_gif(
             best,
@@ -772,18 +1007,34 @@ def save_training_outputs(args, run_dir, raw_best, best, evo, coeff_loss, evalua
         optimized_video_info["path"] = str(optimized_gif_path)
         video_info = {
             "path": str(optimized_gif_path),
-            "raw_gif": raw_video_info,
             "optimized_gif": optimized_video_info,
         }
+        if args.save_raw_gifs:
+            raw_gif_path = run_dir / "best_lander_before_optimization.gif"
+            raw_video_info = render_gif(
+                raw_best,
+                raw_gif_path,
+                seed=args.seed + args.video_seed_offset,
+                duration=args.video_duration,
+            )
+            raw_video_info["path"] = str(raw_gif_path)
+            video_info["raw_gif"] = raw_video_info
 
     metrics = {
         "best_training_fitness": float(best.fitness),
         "best_training_fitness_before_optimization": float(raw_best.fitness),
-        "best_model_is_optimized": True,
+        "best_model_source": "validation" if args.validation_selection and evo.best_validation is not None else "training",
+        "best_model_generation": getattr(raw_best, "_best_generation", None),
+        "best_validation_score": evo.best_validation_score,
+        "best_model_is_optimized": coeff_gate is None or bool(coeff_gate.get("kept_optimized", True)),
         "coefficient_optimization_last_loss": coeff_loss,
+        "coefficient_gate": coeff_gate,
         "test": evaluation,
         "video": video_info,
         "generation_artifacts": generation_artifacts,
+        "validation_records": evo.validation_records,
+        "interrupted": evo.interrupted,
+        "stop_reason": evo.stop_reason,
         "sweep": sweep_result,
     }
     write_json(run_dir / "metrics.json", metrics)
@@ -791,8 +1042,16 @@ def save_training_outputs(args, run_dir, raw_best, best, evo, coeff_loss, evalua
     with open(run_dir / "summary.txt", "w") as f:
         f.write(f"Experiment: {args.experiment_name}\n")
         f.write(f"Seed: {args.seed}\n")
+        f.write(f"Interrupted: {evo.interrupted}\n")
+        if evo.stop_reason:
+            f.write(f"Stop reason: {evo.stop_reason}\n")
+        f.write(f"Best model source: {metrics['best_model_source']}\n")
+        if metrics["best_model_generation"] is not None:
+            f.write(f"Best model generation: {metrics['best_model_generation']}\n")
         f.write(f"Best training fitness: {raw_best.fitness:.3f}\n")
-        f.write("Best model saved after coefficient optimization: yes\n")
+        f.write(f"Best model saved after coefficient optimization: {metrics['best_model_is_optimized']}\n")
+        if evo.best_validation_score is not None:
+            f.write(f"Best validation score: {evo.best_validation_score:.3f}\n")
         f.write(f"Test total score: {evaluation['total_score']:.3f}\n")
         f.write(f"Test mean score: {evaluation['mean_score']:.3f}\n")
         f.write(f"Test score std: {evaluation['std_score']:.3f}\n")
@@ -800,8 +1059,9 @@ def save_training_outputs(args, run_dir, raw_best, best, evo, coeff_loss, evalua
         f.write(f"Test crash rate: {evaluation['crash_rate']:.3f}\n")
         f.write(f"Generation artifacts: {len(generation_artifacts)} checkpoints\n")
         if video_info:
-            f.write(f"GIF before optimization: {video_info['raw_gif']['path']}\n")
-            f.write(f"GIF after optimization: {video_info['optimized_gif']['path']}\n")
+            if "raw_gif" in video_info:
+                f.write(f"GIF before optimization: {video_info['raw_gif']['path']}\n")
+            f.write(f"Best GIF: {video_info['optimized_gif']['path']}\n")
 
 
 def main():
@@ -824,15 +1084,17 @@ def main():
         args.mode = "sweep-train-final"
         args.verbose = True
 
-    raw_best, best, evo, coeff_loss, evaluation = run_training(args, run_dir)
-    save_training_outputs(args, run_dir, raw_best, best, evo, coeff_loss, evaluation, sweep_result)
+    raw_best, best, evo, coeff_loss, coeff_gate, evaluation = run_training(args, run_dir)
+    save_training_outputs(args, run_dir, raw_best, best, evo, coeff_loss, coeff_gate, evaluation, sweep_result)
     print(f"Experiment complete. Results written to {run_dir}")
     print(f"Test total score: {evaluation['total_score']:.2f}")
     env.close()
 
-    print("Generating plots...")
-    import sys
-    subprocess.run([sys.executable, str(Path(__file__).parent / "plot_run.py"), run_dir.name], check=False)
+    if args.plots:
+        print("Generating plots...")
+        from plot_run import generate_plots
+
+        generate_plots(run_dir.name)
 
 
 if __name__ == "__main__":

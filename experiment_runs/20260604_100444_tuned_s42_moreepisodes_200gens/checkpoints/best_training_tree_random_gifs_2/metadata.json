@@ -1,0 +1,13 @@
+{
+  "completed_episodes": 20,
+  "crashes": 9,
+  "duration": 500,
+  "episodes": 20,
+  "frame_stride": 4,
+  "mean_reward": 108.40348258943023,
+  "model_path": "/Users/vukjurisic/Work/Uni/EvolutionaryAlgorithms/lunar_lander/experiment_runs/20260604_100444_tuned_s42_moreepisodes_200gens/checkpoints/best_training_tree.pkl",
+  "output_dir": "/Users/vukjurisic/Work/Uni/EvolutionaryAlgorithms/lunar_lander/experiment_runs/20260604_100444_tuned_s42_moreepisodes_200gens/checkpoints/best_training_tree_random_gifs",
+  "resize": 0.75,
+  "sampler_seed": 2644912120,
+  "std_reward": 134.0506067798056
+}

@@ -8,12 +8,12 @@ runs test evaluation, writes metrics.json / summary / GIFs, and generates plots.
 import csv
 import json
 import pickle
-import subprocess
 import sys
 from argparse import Namespace
 from pathlib import Path
 
 import config
+from plot_run import generate_plots
 from run_experiment import evaluate_tree, render_gif, update_runtime_config, write_json
 from train import env
 
@@ -23,16 +23,49 @@ def load_args(run_dir):
         return Namespace(**json.load(f))
 
 
-def find_best_checkpoint(run_dir):
+def load_csv_rows(run_dir):
+    csv_rows = []
+    csv_path = run_dir / "generation_history.csv"
+    if csv_path.exists():
+        with open(csv_path) as f:
+            csv_rows = [{"generation": int(r["generation"]), **r} for r in csv.DictReader(f)]
+    return csv_rows
+
+
+def row_fitness(row):
+    if "best_fitness" in row:
+        return float(row["best_fitness"])
+    return float(row.get("fitness", 0.0))
+
+
+def find_best_checkpoint(run_dir, csv_rows):
+    best_validation = run_dir / "checkpoints" / "best_validation_tree.pkl"
+    if best_validation.exists():
+        return best_validation
+
+    best_training = run_dir / "checkpoints" / "best_training_tree.pkl"
+    if best_training.exists():
+        return best_training
+
     pkls = sorted((run_dir / "generation_artifacts").glob("generation_*_tree.pkl"))
     if not pkls:
         sys.exit("No checkpoint pkl files found in generation_artifacts/")
-    return pkls[-1]
+
+    if not csv_rows:
+        return pkls[-1]
+
+    fitness_by_gen = {r["generation"]: row_fitness(r) for r in csv_rows}
+
+    def checkpoint_fitness(path):
+        gen = int(path.stem.split("_")[1])
+        return fitness_by_gen.get(gen, float("-inf"))
+
+    return max(pkls, key=checkpoint_fitness)
 
 
 def reconstruct_artifacts(run_dir, csv_rows):
     artifact_dir = run_dir / "generation_artifacts"
-    fitness_by_gen = {r["generation"]: float(r["best_fitness"]) for r in csv_rows}
+    fitness_by_gen = {r["generation"]: row_fitness(r) for r in csv_rows}
     artifacts = []
     for pkl_path in sorted(artifact_dir.glob("generation_*_tree.pkl")):
         gen = int(pkl_path.stem.split("_")[1])
@@ -69,7 +102,8 @@ def main():
     args = load_args(run_dir)
     update_runtime_config(args)
 
-    best_pkl = find_best_checkpoint(run_dir)
+    csv_rows = load_csv_rows(run_dir)
+    best_pkl = find_best_checkpoint(run_dir, csv_rows)
     print(f"Loading best tree from {best_pkl.name}...")
     with open(best_pkl, "rb") as f:
         best = pickle.load(f)
@@ -79,12 +113,6 @@ def main():
     evaluation = evaluate_tree(best, args.test_episodes, args.test_duration, args.seed + 10_000)
     print(f"  mean score: {evaluation['mean_score']:.2f}, survival rate: {evaluation['survival_rate']:.1%}")
 
-    csv_rows = []
-    csv_path = run_dir / "generation_history.csv"
-    if csv_path.exists():
-        with open(csv_path) as f:
-            csv_rows = [{"generation": int(r["generation"]), **r} for r in csv.DictReader(f)]
-
     with open(run_dir / "best_tree.txt", "w") as f:
         f.write(json.dumps(best.get_readable_repr(), indent=2) + "\n")
     with open(run_dir / "best_tree.pkl", "wb") as f:
@@ -93,15 +121,16 @@ def main():
     video_info = None
     if args.video:
         print("Rendering GIFs...")
-        raw_gif_path = run_dir / "best_lander_before_optimization.gif"
-        raw_info = render_gif(best, raw_gif_path, seed=args.seed + args.video_seed_offset, duration=args.video_duration)
-        raw_info["path"] = str(raw_gif_path)
-
         opt_gif_path = run_dir / "best_lander.gif"
         opt_info = render_gif(best, opt_gif_path, seed=args.seed + args.video_seed_offset, duration=args.video_duration)
         opt_info["path"] = str(opt_gif_path)
 
-        video_info = {"path": str(opt_gif_path), "raw_gif": raw_info, "optimized_gif": opt_info}
+        video_info = {"path": str(opt_gif_path), "optimized_gif": opt_info}
+        if getattr(args, "save_raw_gifs", False):
+            raw_gif_path = run_dir / "best_lander_before_optimization.gif"
+            raw_info = render_gif(best, raw_gif_path, seed=args.seed + args.video_seed_offset, duration=args.video_duration)
+            raw_info["path"] = str(raw_gif_path)
+            video_info["raw_gif"] = raw_info
 
     generation_artifacts = reconstruct_artifacts(run_dir, csv_rows)
 
@@ -129,7 +158,7 @@ def main():
         write_json(run_dir / "run_config.json", vars(args))
 
     print("Generating plots...")
-    subprocess.run([sys.executable, str(Path(__file__).parent / "plot_run.py"), run_name], check=False)
+    generate_plots(run_name)
 
     actual_gens = csv_rows[-1]["generation"] if csv_rows else 0
     import re

@@ -1,0 +1,15 @@
+Experiment: tuned_s42_moreepisodes_200gens
+Seed: 142
+Interrupted: False
+Best model source: validation
+Best model generation: 75
+Best training fitness: 3736.701
+Best model saved after coefficient optimization: False
+Best validation score: 2210.181
+Test total score: 4206.861
+Test mean score: 140.229
+Test score std: 100.162
+Test survival rate: 0.667
+Test crash rate: 0.333
+Generation artifacts: 20 checkpoints
+Best GIF: experiment_runs/20260604_100444_tuned_s42_moreepisodes_200gens/best_lander.gif

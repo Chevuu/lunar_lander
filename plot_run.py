@@ -36,6 +36,7 @@ def save(fig: plt.Figure, path: Path) -> None:
 def plot_fitness(df: pd.DataFrame, out: Path) -> None:
     fig, ax = plt.subplots(figsize=(10, 5))
     gens = df["generation"]
+    best_so_far_col = "best_fitness_so_far" if "best_fitness_so_far" in df.columns else "best_fitness"
 
     ax.fill_between(
         gens,
@@ -45,7 +46,9 @@ def plot_fitness(df: pd.DataFrame, out: Path) -> None:
         label="mean ± 1 std",
     )
     ax.plot(gens, df["mean_fitness"], label="mean fitness")
-    ax.plot(gens, df["best_fitness"], label="best fitness", linewidth=1.5)
+    ax.plot(gens, df["best_fitness"], label="best of generation", linewidth=1.5)
+    if best_so_far_col != "best_fitness":
+        ax.plot(gens, df[best_so_far_col], label="best so far", linewidth=1.5, linestyle="--")
 
     ax.set_xlabel("Generation")
     ax.set_ylabel("Fitness")
@@ -146,7 +149,7 @@ def plot_artifact_scores(metrics: dict, out: Path) -> None:
     axes[0].bar(gens, train_fitness, width=max(1, gens[1] - gens[0]) * 0.6, color="steelblue")
     axes[0].set_xlabel("Generation")
     axes[0].set_ylabel("Training fitness")
-    axes[0].set_title("Training Fitness at Checkpoints")
+    axes[0].set_title("Best Generation Fitness at Checkpoints")
     axes[0].set_xticks(gens)
     axes[0].grid(True, alpha=0.3, axis="y")
 
@@ -200,11 +203,7 @@ def plot_test_episodes(metrics: dict, out: Path) -> None:
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────
-def main() -> None:
-    if len(sys.argv) != 2:
-        sys.exit("Usage: python plot_run.py <run_name>")
-
-    run_name = sys.argv[1]
+def generate_plots(run_name: str) -> None:
     base, df, metrics = load_run(run_name)
 
     plots_dir = base / "plots"
@@ -219,6 +218,13 @@ def main() -> None:
     plot_test_episodes(metrics, plots_dir)
 
     print("Done.")
+
+
+def main() -> None:
+    if len(sys.argv) != 2:
+        sys.exit("Usage: python plot_run.py <run_name>")
+
+    generate_plots(sys.argv[1])
 
 
 if __name__ == "__main__":
