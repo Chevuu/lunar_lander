@@ -1,0 +1,19 @@
+Experiment: configurable_fitness_multi_elitism
+Seed: 42
+Best training fitness: -103.061
+Fitness mode: shaped
+Elite count: 4
+Best model saved after coefficient optimization: yes
+Test raw mean score: -61.596
+Test raw median score: -63.687
+Test raw score std: 88.241
+Test raw crash rate: 1.000
+Test raw landing rate: 0.000
+Test optimized mean score: -61.596
+Test optimized median score: -63.687
+Test optimized score std: 88.241
+Test optimized crash rate: 1.000
+Test optimized landing rate: 0.000
+Generation artifacts: 3 checkpoints
+GIF before optimization: experiment_runs\20260603_193333_configurable_fitness_multi_elitism\videos\best_lander_before_optimization.gif
+GIF after optimization: experiment_runs\20260603_193333_configurable_fitness_multi_elitism\videos\best_lander.gif

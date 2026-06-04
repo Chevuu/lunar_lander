@@ -1,0 +1,17 @@
+Experiment: baseline_revised
+Seed: 42
+Best training fitness: -139.059
+Best model saved after coefficient optimization: yes
+Test raw mean score: -40.773
+Test raw median score: -52.973
+Test raw score std: 39.891
+Test raw crash rate: 1.000
+Test raw landing rate: 0.000
+Test optimized mean score: -40.773
+Test optimized median score: -52.973
+Test optimized score std: 39.891
+Test optimized crash rate: 1.000
+Test optimized landing rate: 0.000
+Generation artifacts: 3 checkpoints
+GIF before optimization: experiment_runs\20260603_183208_baseline_revised\videos\best_lander_before_optimization.gif
+GIF after optimization: experiment_runs\20260603_183208_baseline_revised\videos\best_lander.gif

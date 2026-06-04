@@ -1,0 +1,37 @@
+{
+  "algorithm": {
+    "crash_penalty_weight": 100.0,
+    "elite_count": 4,
+    "fitness_mode": "shaped",
+    "landing_bonus_weight": 200.0,
+    "random_seeds": true,
+    "std_penalty_weight": 0.25,
+    "time_penalty_weight": 0.0
+  },
+  "evaluation_files": {
+    "test_optimized": "evaluations/test_optimized.json",
+    "test_raw": "evaluations/test_raw.json",
+    "validation_optimized": "evaluations/validation_optimized.json",
+    "validation_raw": "evaluations/validation_raw.json"
+  },
+  "experiment_name": "configurable_fitness_multi_elitism",
+  "model_files": {
+    "optimized": "models/selected_optimized.pkl",
+    "raw": "models/selected_raw.pkl"
+  },
+  "post_processing": {
+    "coefficient_optimization": {
+      "enabled": true,
+      "last_loss": 10.202615141698484,
+      "learning_rate": 0.000169,
+      "steps": 250
+    }
+  },
+  "seed": 42,
+  "selection": {
+    "criterion": "best_training_fitness",
+    "optimized_tree_size": 57,
+    "raw_training_fitness": -103.06091809525368,
+    "raw_tree_size": 57
+  }
+}

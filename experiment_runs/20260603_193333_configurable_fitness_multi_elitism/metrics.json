@@ -1,0 +1,488 @@
+{
+  "algorithm": {
+    "crash_penalty_weight": 100.0,
+    "elite_count": 4,
+    "fitness_mode": "shaped",
+    "landing_bonus_weight": 200.0,
+    "random_seeds": true,
+    "std_penalty_weight": 0.25,
+    "time_penalty_weight": 0.0
+  },
+  "best_model_is_optimized": true,
+  "best_training_fitness": -103.06091809525368,
+  "best_training_fitness_before_optimization": -103.06091809525368,
+  "coefficient_optimization_last_loss": 10.202615141698484,
+  "comparisons": {
+    "optimized_validation_vs_test_mean_delta": 2.71452959266648,
+    "raw_validation_vs_test_mean_delta": 3.2915283946661305,
+    "raw_vs_optimized_test_crash_rate_delta": 0.0,
+    "raw_vs_optimized_test_mean_delta": 0.0,
+    "raw_vs_optimized_validation_crash_rate_delta": 0.0,
+    "raw_vs_optimized_validation_mean_delta": 0.5769988019996504
+  },
+  "evaluations": {
+    "test": {
+      "optimized": {
+        "crash_rate": 1.0,
+        "crashed_episodes": 10,
+        "duration": 500,
+        "episode_lengths": [
+          110,
+          110,
+          97,
+          114,
+          102,
+          107,
+          197,
+          125,
+          128,
+          98
+        ],
+        "episode_outcomes": [
+          "crash",
+          "crash",
+          "crash",
+          "crash",
+          "crash",
+          "crash",
+          "crash",
+          "crash",
+          "crash",
+          "crash"
+        ],
+        "episode_scores": [
+          -97.06411073854292,
+          -42.906701079371885,
+          24.130954968679788,
+          12.698462712250873,
+          -91.17518226721647,
+          -84.46703929635227,
+          -282.1331294352921,
+          -90.09845386753733,
+          20.845440295121136,
+          14.2052879160575
+        ],
+        "episode_seeds": [
+          20042,
+          20043,
+          20044,
+          20045,
+          20046,
+          20047,
+          20048,
+          20049,
+          20050,
+          20051
+        ],
+        "label": "test_optimized",
+        "landed_episodes": 0,
+        "landing_rate": 0.0,
+        "max_score": 24.130954968679788,
+        "mean_episode_length": 118.8,
+        "mean_score": -61.596447079220354,
+        "median_episode_length": 110.0,
+        "median_score": -63.68687018786208,
+        "min_score": -282.1331294352921,
+        "seed_count": 10,
+        "seed_start": 20042,
+        "std_score": 88.24143521906298,
+        "survival_rate": 0.0,
+        "survived_episodes": 0,
+        "terminated_episodes": 10,
+        "timeout_rate": 0.0,
+        "total_episodes": 10,
+        "total_score": -615.9644707922038,
+        "truncated_episodes": 0
+      },
+      "raw": {
+        "crash_rate": 1.0,
+        "crashed_episodes": 10,
+        "duration": 500,
+        "episode_lengths": [
+          110,
+          110,
+          97,
+          114,
+          102,
+          107,
+          197,
+          125,
+          128,
+          98
+        ],
+        "episode_outcomes": [
+          "crash",
+          "crash",
+          "crash",
+          "crash",
+          "crash",
+          "crash",
+          "crash",
+          "crash",
+          "crash",
+          "crash"
+        ],
+        "episode_scores": [
+          -97.06411073854292,
+          -42.906701079371885,
+          24.130954968679788,
+          12.698462712250873,
+          -91.17518226721647,
+          -84.46703929635227,
+          -282.1331294352921,
+          -90.09845386753733,
+          20.845440295121136,
+          14.2052879160575
+        ],
+        "episode_seeds": [
+          20042,
+          20043,
+          20044,
+          20045,
+          20046,
+          20047,
+          20048,
+          20049,
+          20050,
+          20051
+        ],
+        "label": "test_raw",
+        "landed_episodes": 0,
+        "landing_rate": 0.0,
+        "max_score": 24.130954968679788,
+        "mean_episode_length": 118.8,
+        "mean_score": -61.596447079220354,
+        "median_episode_length": 110.0,
+        "median_score": -63.68687018786208,
+        "min_score": -282.1331294352921,
+        "seed_count": 10,
+        "seed_start": 20042,
+        "std_score": 88.24143521906298,
+        "survival_rate": 0.0,
+        "survived_episodes": 0,
+        "terminated_episodes": 10,
+        "timeout_rate": 0.0,
+        "total_episodes": 10,
+        "total_score": -615.9644707922038,
+        "truncated_episodes": 0
+      }
+    },
+    "validation": {
+      "optimized": {
+        "crash_rate": 0.9,
+        "crashed_episodes": 9,
+        "duration": 500,
+        "episode_lengths": [
+          200,
+          98,
+          123,
+          89,
+          201,
+          80,
+          95,
+          84,
+          113,
+          88
+        ],
+        "episode_outcomes": [
+          "landing",
+          "crash",
+          "crash",
+          "crash",
+          "crash",
+          "crash",
+          "crash",
+          "crash",
+          "crash",
+          "crash"
+        ],
+        "episode_scores": [
+          265.1427485043141,
+          -19.64716349255046,
+          23.027802767135995,
+          -58.22326350209855,
+          -251.35051381312329,
+          -86.63336284620858,
+          -107.00219245676293,
+          -142.07630151311247,
+          -118.97830077724177,
+          -147.36921958922034
+        ],
+        "episode_seeds": [
+          10042,
+          10043,
+          10044,
+          10045,
+          10046,
+          10047,
+          10048,
+          10049,
+          10050,
+          10051
+        ],
+        "label": "validation_optimized",
+        "landed_episodes": 1,
+        "landing_rate": 0.1,
+        "max_score": 265.1427485043141,
+        "mean_episode_length": 117.1,
+        "mean_score": -64.31097667188683,
+        "median_episode_length": 96.5,
+        "median_score": -96.81777765148576,
+        "min_score": -251.35051381312329,
+        "seed_count": 10,
+        "seed_start": 10042,
+        "std_score": 130.93471157735854,
+        "survival_rate": 0.1,
+        "survived_episodes": 1,
+        "terminated_episodes": 10,
+        "timeout_rate": 0.0,
+        "total_episodes": 10,
+        "total_score": -643.1097667188683,
+        "truncated_episodes": 0
+      },
+      "raw": {
+        "crash_rate": 0.9,
+        "crashed_episodes": 9,
+        "duration": 500,
+        "episode_lengths": [
+          200,
+          98,
+          122,
+          89,
+          201,
+          80,
+          95,
+          84,
+          113,
+          88
+        ],
+        "episode_outcomes": [
+          "landing",
+          "crash",
+          "crash",
+          "crash",
+          "crash",
+          "crash",
+          "crash",
+          "crash",
+          "crash",
+          "crash"
+        ],
+        "episode_scores": [
+          265.1427485043141,
+          -19.64716349255046,
+          17.257814747139406,
+          -58.22326350209855,
+          -251.35051381312329,
+          -86.63336284620858,
+          -107.00219245676293,
+          -142.07630151311247,
+          -118.97830077724177,
+          -147.36921958922034
+        ],
+        "episode_seeds": [
+          10042,
+          10043,
+          10044,
+          10045,
+          10046,
+          10047,
+          10048,
+          10049,
+          10050,
+          10051
+        ],
+        "label": "validation_raw",
+        "landed_episodes": 1,
+        "landing_rate": 0.1,
+        "max_score": 265.1427485043141,
+        "mean_episode_length": 117.0,
+        "mean_score": -64.88797547388648,
+        "median_episode_length": 96.5,
+        "median_score": -96.81777765148576,
+        "min_score": -251.35051381312329,
+        "seed_count": 10,
+        "seed_start": 10042,
+        "std_score": 130.5607379811971,
+        "survival_rate": 0.1,
+        "survived_episodes": 1,
+        "terminated_episodes": 10,
+        "timeout_rate": 0.0,
+        "total_episodes": 10,
+        "total_score": -648.8797547388649,
+        "truncated_episodes": 0
+      }
+    }
+  },
+  "generation_artifacts": [
+    {
+      "coefficient_optimization_last_loss": 1912976232.0210383,
+      "generation": 10,
+      "gif": {
+        "frames": 59,
+        "path": "experiment_runs\\20260603_193333_configurable_fitness_multi_elitism\\generation_artifacts\\generation_0010_after_optimization.gif",
+        "reward": -123.79547572988785
+      },
+      "model_is_optimized": true,
+      "model_path": "experiment_runs\\20260603_193333_configurable_fitness_multi_elitism\\generation_artifacts\\generation_0010_tree.pkl",
+      "optimized_gif": {
+        "frames": 59,
+        "path": "experiment_runs\\20260603_193333_configurable_fitness_multi_elitism\\generation_artifacts\\generation_0010_after_optimization.gif",
+        "reward": -123.79547572988785
+      },
+      "raw_gif": {
+        "frames": 59,
+        "path": "experiment_runs\\20260603_193333_configurable_fitness_multi_elitism\\generation_artifacts\\generation_0010_before_optimization.gif",
+        "reward": -123.40225286119238
+      },
+      "training_fitness": -207.92473621685133,
+      "tree_size": 22
+    },
+    {
+      "coefficient_optimization_last_loss": 4475733991.018009,
+      "generation": 20,
+      "gif": {
+        "frames": 90,
+        "path": "experiment_runs\\20260603_193333_configurable_fitness_multi_elitism\\generation_artifacts\\generation_0020_after_optimization.gif",
+        "reward": -161.20549844968087
+      },
+      "model_is_optimized": true,
+      "model_path": "experiment_runs\\20260603_193333_configurable_fitness_multi_elitism\\generation_artifacts\\generation_0020_tree.pkl",
+      "optimized_gif": {
+        "frames": 90,
+        "path": "experiment_runs\\20260603_193333_configurable_fitness_multi_elitism\\generation_artifacts\\generation_0020_after_optimization.gif",
+        "reward": -161.20549844968087
+      },
+      "raw_gif": {
+        "frames": 90,
+        "path": "experiment_runs\\20260603_193333_configurable_fitness_multi_elitism\\generation_artifacts\\generation_0020_before_optimization.gif",
+        "reward": -161.20549844968087
+      },
+      "training_fitness": -174.0357736412578,
+      "tree_size": 22
+    },
+    {
+      "coefficient_optimization_last_loss": 8273408120.844595,
+      "generation": 30,
+      "gif": {
+        "frames": 84,
+        "path": "experiment_runs\\20260603_193333_configurable_fitness_multi_elitism\\generation_artifacts\\generation_0030_after_optimization.gif",
+        "reward": -78.01749022710561
+      },
+      "model_is_optimized": true,
+      "model_path": "experiment_runs\\20260603_193333_configurable_fitness_multi_elitism\\generation_artifacts\\generation_0030_tree.pkl",
+      "optimized_gif": {
+        "frames": 84,
+        "path": "experiment_runs\\20260603_193333_configurable_fitness_multi_elitism\\generation_artifacts\\generation_0030_after_optimization.gif",
+        "reward": -78.01749022710561
+      },
+      "raw_gif": {
+        "frames": 84,
+        "path": "experiment_runs\\20260603_193333_configurable_fitness_multi_elitism\\generation_artifacts\\generation_0030_before_optimization.gif",
+        "reward": -78.01749022710561
+      },
+      "training_fitness": -196.4171137829001,
+      "tree_size": 22
+    }
+  ],
+  "post_processing": {
+    "coefficient_optimization": {
+      "enabled": true,
+      "last_loss": 10.202615141698484,
+      "learning_rate": 0.000169,
+      "steps": 250
+    }
+  },
+  "selection": {
+    "criterion": "best_training_fitness",
+    "optimized_tree_size": 57,
+    "raw_training_fitness": -103.06091809525368,
+    "raw_tree_size": 57
+  },
+  "sweep": null,
+  "test": {
+    "crash_rate": 1.0,
+    "crashed_episodes": 10,
+    "duration": 500,
+    "episode_lengths": [
+      110,
+      110,
+      97,
+      114,
+      102,
+      107,
+      197,
+      125,
+      128,
+      98
+    ],
+    "episode_outcomes": [
+      "crash",
+      "crash",
+      "crash",
+      "crash",
+      "crash",
+      "crash",
+      "crash",
+      "crash",
+      "crash",
+      "crash"
+    ],
+    "episode_scores": [
+      -97.06411073854292,
+      -42.906701079371885,
+      24.130954968679788,
+      12.698462712250873,
+      -91.17518226721647,
+      -84.46703929635227,
+      -282.1331294352921,
+      -90.09845386753733,
+      20.845440295121136,
+      14.2052879160575
+    ],
+    "episode_seeds": [
+      20042,
+      20043,
+      20044,
+      20045,
+      20046,
+      20047,
+      20048,
+      20049,
+      20050,
+      20051
+    ],
+    "label": "test_optimized",
+    "landed_episodes": 0,
+    "landing_rate": 0.0,
+    "max_score": 24.130954968679788,
+    "mean_episode_length": 118.8,
+    "mean_score": -61.596447079220354,
+    "median_episode_length": 110.0,
+    "median_score": -63.68687018786208,
+    "min_score": -282.1331294352921,
+    "seed_count": 10,
+    "seed_start": 20042,
+    "std_score": 88.24143521906298,
+    "survival_rate": 0.0,
+    "survived_episodes": 0,
+    "terminated_episodes": 10,
+    "timeout_rate": 0.0,
+    "total_episodes": 10,
+    "total_score": -615.9644707922038,
+    "truncated_episodes": 0
+  },
+  "video": {
+    "optimized_gif": {
+      "frames": 119,
+      "path": "experiment_runs\\20260603_193333_configurable_fitness_multi_elitism\\videos\\best_lander.gif",
+      "reward": 5.890253577325936
+    },
+    "path": "experiment_runs\\20260603_193333_configurable_fitness_multi_elitism\\videos\\best_lander.gif",
+    "raw_gif": {
+      "frames": 119,
+      "path": "experiment_runs\\20260603_193333_configurable_fitness_multi_elitism\\videos\\best_lander_before_optimization.gif",
+      "reward": 5.890253577325936
+    }
+  }
+}

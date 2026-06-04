@@ -125,7 +125,7 @@ def plot_tree_size(df: pd.DataFrame, out: Path) -> None:
 def plot_artifact_scores(metrics: dict, out: Path) -> None:
     artifacts = metrics.get("generation_artifacts", [])
     if not artifacts:
-        print("  skipping plot 5 — no generation artifacts in this run")
+        print("  skipping plot 5 - no generation artifacts in this run")
         return
 
     # Each artifact has a single test reward from the GIF run (not full episodes).
@@ -175,7 +175,7 @@ def plot_test_episodes(metrics: dict, out: Path) -> None:
     test = metrics.get("test", {})
     scores = test.get("episode_scores")
     if not scores:
-        print("  skipping plot 8 — no test episode scores")
+        print("  skipping plot 6 - no test episode scores")
         return
 
     mean = test["mean_score"]

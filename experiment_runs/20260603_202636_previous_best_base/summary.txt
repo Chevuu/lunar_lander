@@ -1,0 +1,19 @@
+Experiment: previous_best_base
+Seed: 42
+Best training fitness: 151.491
+Fitness mode: total
+Elite count: 1
+Best model saved after coefficient optimization: yes
+Test raw mean score: -57.110
+Test raw median score: -58.427
+Test raw score std: 40.259
+Test raw crash rate: 1.000
+Test raw landing rate: 0.000
+Test optimized mean score: -57.173
+Test optimized median score: -58.427
+Test optimized score std: 40.387
+Test optimized crash rate: 1.000
+Test optimized landing rate: 0.000
+Generation artifacts: 4 checkpoints
+GIF before optimization: experiment_runs\20260603_202636_previous_best_base\videos\best_lander_before_optimization.gif
+GIF after optimization: experiment_runs\20260603_202636_previous_best_base\videos\best_lander.gif

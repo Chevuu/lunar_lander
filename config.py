@@ -28,3 +28,10 @@ RANDOM_SEEDS = False       # randomise episode seeds per evaluation to prevent o
 CRASH_PENALTY = False      # subtract 100 * crashed_episodes from fitness to directly penalise crashes
 PARSIMONY = False          # subtract 1 * tree_size from fitness to discourage bloat
 TIME_PRESSURE = False      # subtract 0.1 * total_steps from fitness to discourage hovering without landing
+
+FITNESS_MODE = "total"     # total keeps legacy fitness; shaped uses normalized score/rate penalties
+CRASH_PENALTY_WEIGHT = 0.0 # shaped fitness penalty multiplied by crash_rate
+LANDING_BONUS_WEIGHT = 0.0 # shaped fitness bonus multiplied by landing_rate
+STD_PENALTY_WEIGHT = 0.0   # shaped fitness penalty multiplied by per-episode score std
+TIME_PENALTY_WEIGHT = 0.0  # shaped fitness penalty multiplied by mean episode length
+ELITE_COUNT = 1            # number of all-time best individuals copied into each generation

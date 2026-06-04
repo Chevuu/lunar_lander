@@ -1,0 +1,28 @@
+{
+  "evaluation_files": {
+    "test_optimized": "evaluations/test_optimized.json",
+    "test_raw": "evaluations/test_raw.json",
+    "validation_optimized": "evaluations/validation_optimized.json",
+    "validation_raw": "evaluations/validation_raw.json"
+  },
+  "experiment_name": "baseline_revised",
+  "model_files": {
+    "optimized": "models/selected_optimized.pkl",
+    "raw": "models/selected_raw.pkl"
+  },
+  "post_processing": {
+    "coefficient_optimization": {
+      "enabled": true,
+      "last_loss": 14.744499428759902,
+      "learning_rate": 0.000169,
+      "steps": 250
+    }
+  },
+  "seed": 42,
+  "selection": {
+    "criterion": "best_training_fitness",
+    "optimized_tree_size": 48,
+    "raw_training_fitness": -139.05861045552075,
+    "raw_tree_size": 48
+  }
+}

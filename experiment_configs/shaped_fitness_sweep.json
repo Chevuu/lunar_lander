@@ -1,0 +1,35 @@
+{
+  "_comment": "Sweep shaped fitness weights with random seeds. GP params fixed at best-known values from the prior GP sweep.",
+  "experiment_name": "shaped_fitness_weight_sweep",
+
+  "seed": 42,
+  "n_jobs": 8,
+  "verbose": true,
+
+  "pop_size": 128,
+  "max_gens": 75,
+  "max_tree_size": 63,
+  "num_constants": 2,
+  "num_episodes": 20,
+  "episode_duration": 500,
+
+  "coeff_lr": 0.000169,
+  "coeff_opt_steps": 250,
+  "batch_size": 128,
+  "gamma": 0.9796,
+  "grad_clip": 100,
+
+  "random_seeds": true,
+  "fitness_mode": "shaped",
+  "elite_count": 2,
+
+  "test_episodes": 10,
+  "test_duration": 500,
+  "validation_episodes": 10,
+  "video": true,
+  "artifact_interval": 10,
+
+  "n_trials": 40,
+  "sweep_gens": 25,
+  "sweep_episodes": 12
+}
