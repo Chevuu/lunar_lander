@@ -1,0 +1,6 @@
+[
+  "(((sqrt(abs(5.421127607323049))-(x_0--1.8815680742263794))/sin(((log(abs(x_3))*x_6)-sin((log(abs(x_7))*(max(((cos(((min(x_3,x_0)*((x_6*x_7)-x_2))*sin(min(x_4,log(abs(-2.7117369174957275))))))-sin(sin(sqrt(abs(min(min(x_0,sin(x_6)),cos(x_0)))))))-x_3),x_0)/-0.3428457802437481))))))+(sqrt(abs(x_0))*x_3))",
+  "max(sqrt(abs(max(x_2,((exp((x_5/(x_6/x_1)))/x_3)-max(x_5,log(abs(sin(exp(-4.890552520751953))))))))),(exp(((max(x_2,min(sqrt(abs((x_2*-0.3189367651939392))),max(sin(x_2),min(cos(x_7),log(abs(x_1))))))+x_3)/(x_6/x_1)))-max(sqrt(abs(log(abs(max(min(x_7,-1.388132039080152),(x_3+(sqrt(abs(x_7))*exp(x_5)))))))),log(abs(cos((x_6*-1.411412575062808)))))))",
+  "sin(exp(max(x_1,x_1)))",
+  "max((((0.045005399935471355-x_7)/(x_6*5.091202043375834))*(max(-3.272220959959146,x_6)+x_4)),min(cos(sqrt(abs((1.9272078417091905-2.7061351102367883)))),min(log(abs(sin((sqrt(abs(exp(sqrt(abs(4.0331711769104)))))+(min(x_6,sqrt(abs(x_7)))/sqrt(abs((sin(x_4)/(x_2/x_2))))))))),3.995568037033081)))"
+]

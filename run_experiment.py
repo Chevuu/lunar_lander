@@ -284,7 +284,11 @@ def summarize_population(generation, population, best_fitness_so_far=None):
     best_idx = int(np.argmax(fitnesses))
     best_individual = population[best_idx]
     best_stats = getattr(best_individual, "_episode_stats", None)
-    best_total_episodes = best_stats["total_episodes"] if best_stats else 1
+    best_lander_fitness = (
+        float(best_stats["mean_score"])
+        if best_stats
+        else float(fitnesses[best_idx])
+    )
     episode_scores = []
     total_episodes = 0
     survived_episodes = 0
@@ -309,7 +313,7 @@ def summarize_population(generation, population, best_fitness_so_far=None):
         "generation": generation,
         "best_fitness": float(fitnesses[best_idx]),
         "best_fitness_so_far": float(best_fitness_so_far) if best_fitness_so_far is not None else float(fitnesses[best_idx]),
-        "best_lander_fitness": float(fitnesses[best_idx] / best_total_episodes) if best_total_episodes else float(fitnesses[best_idx]),
+        "best_lander_fitness": best_lander_fitness,
         "mean_fitness": float(np.mean(fitnesses)),
         "std_fitness": float(np.std(fitnesses)),
         "best_tree_size": int(sizes[best_idx]),

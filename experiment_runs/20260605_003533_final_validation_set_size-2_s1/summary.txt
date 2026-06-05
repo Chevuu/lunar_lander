@@ -1,0 +1,15 @@
+Experiment: final_validation_set_size-2_s1
+Seed: 1
+Interrupted: False
+Best model source: validation
+Best model generation: 181
+Best training fitness: 1196.977
+Best model saved after coefficient optimization: True
+Best validation score: 993.609
+Test total score: -420.722
+Test mean score: -14.024
+Test score std: 104.952
+Test survival rate: 0.133
+Test crash rate: 0.867
+Generation artifacts: 20 checkpoints
+Best GIF: experiment_runs/20260605_003533_final_validation_set_size-2_s1/best_lander.gif

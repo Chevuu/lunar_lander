@@ -1,0 +1,8 @@
+{
+  "best_training_fitness": 3881.5278718070267,
+  "best_training_generation": 166,
+  "best_validation_generation": 177,
+  "best_validation_score": 2142.641072541516,
+  "generation": 200,
+  "latest_training_fitness": 2879.1532322640346
+}
