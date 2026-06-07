@@ -1,0 +1,14 @@
+{
+  "artifacts_dir": "/home/tom/Studie/Vakken/evolutionary_algorithms/lunar_lander/experiment_runs/20260605_001126_final_val4_s1/generation_artifacts",
+  "best_generation": 200,
+  "best_model_label": "generation_0200",
+  "best_reward": 290.9412441471887,
+  "duration": 500,
+  "episode_seed": 1635199478,
+  "frame_stride": 4,
+  "gifs_saved": true,
+  "models_completed": 21,
+  "models_found": 21,
+  "output_dir": "/home/tom/Studie/Vakken/evolutionary_algorithms/lunar_lander/experiment_runs/20260605_001126_final_val4_s1/generation_artifacts/same_episode_comparison_seed_1635199478",
+  "resize": 0.75
+}

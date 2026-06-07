@@ -47,6 +47,9 @@ VALIDATION_INTERVAL = 1           # validate every n generations
 VALIDATION_CANDIDATES = 2         # validate top-k training candidates per validation generation
 VALIDATION_SEED_OFFSET = 50_000   # offset for held-out validation seeds
 
+TOURNAMENT_SIZE = 8
+TOURNAMENT_SIZE_START = 8
+
 SAVE_BEST_EACH_GEN = True        # write latest/best pkl files after every completed generation
 GRACEFUL_STOP = True             # catch interruption and save outputs from completed generations
 GATE_COEFF_OPTIMIZATION = True   # keep coefficient-optimized model only if validation improves

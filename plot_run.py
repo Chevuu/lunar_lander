@@ -184,20 +184,26 @@ def plot_test_episodes(metrics: dict, out: Path) -> None:
     mean = test["mean_score"]
     std = test["std_score"]
 
+    crashed = test.get("episode_crashed", [False] * len(scores))
+
     fig, ax = plt.subplots(figsize=(10, 5))
     x = np.arange(len(scores))
-    colors = ["green" if s > 0 else "tomato" for s in scores]
+    colors = ["tomato" if c else "steelblue" for c in crashed]
     ax.bar(x, scores, color=colors, edgecolor="white", linewidth=0.5)
     ax.axhline(mean, color="black", linestyle="--", linewidth=1.5, label=f"mean = {mean:.1f}")
     ax.axhspan(mean - std, mean + std, alpha=0.12, color="black", label=f"±1 std ({std:.1f})")
     ax.axhline(0, color="gray", linewidth=0.8)
+
+    from matplotlib.patches import Patch
+    stat_handles, _ = ax.get_legend_handles_labels()
+    legend_handles = stat_handles + [Patch(color="steelblue", label="survived"), Patch(color="tomato", label="crashed")]
 
     ax.set_xlabel("Episode")
     ax.set_ylabel("Score")
     ax.set_title("Final Test Episode Scores")
     ax.set_xticks(x)
     ax.set_xticklabels([f"ep {i+1}" for i in x], rotation=45)
-    ax.legend()
+    ax.legend(handles=legend_handles)
     ax.grid(True, alpha=0.3, axis="y")
     save(fig, out / "06_test_episode_scores.png")
 

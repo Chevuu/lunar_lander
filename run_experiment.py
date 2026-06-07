@@ -21,6 +21,7 @@ import config
 import sweep_config
 from genepro.evo import Evolution, generate_offspring, generate_random_multitree
 from genepro.node_impl import Constant, Feature
+from genepro.selection import tournament_selection
 from train import ReplayMemory, Transition, env, num_features, set_seed
 
 
@@ -48,10 +49,11 @@ def parse_args():
     parser.add_argument("--config-json", default=pre_args.config_json)
     parser.add_argument(
         "--mode",
-        choices=["train", "sweep", "sweep-train"],
+        choices=["train", "sweep", "sweep-train", "retest"],
         default=defaults.get("mode", "train"),
-        help="train runs one experiment, sweep runs Optuna only, sweep-train tunes then trains with the best parameters.",
+        help="train runs one experiment, sweep runs Optuna only, sweep-train tunes then trains with the best parameters, retest re-runs the final test on an existing run (requires --retest-dir).",
     )
+    add_arg(parser, "retest_dir", defaults.get("retest_dir", None))
     add_arg(parser, "experiment_name", defaults.get("experiment_name", "lunar_lander_gp"))
     add_arg(parser, "results_dir", defaults.get("results_dir", "experiment_runs"))
     add_arg(parser, "seed", defaults.get("seed", config.SEED), type=int)
@@ -96,6 +98,9 @@ def parse_args():
     add_arg(parser, "validation_candidates", defaults.get("validation_candidates", config.VALIDATION_CANDIDATES), type=int)
     add_arg(parser, "validation_seed_offset", defaults.get("validation_seed_offset", config.VALIDATION_SEED_OFFSET), type=int)
 
+    add_arg(parser, "tournament_size", defaults.get("tournament_size", config.TOURNAMENT_SIZE), type=int)
+    add_arg(parser, "tournament_size_start", defaults.get("tournament_size_start", config.TOURNAMENT_SIZE_START), type=int)
+
     add_arg(parser, "save_best_each_gen", defaults.get("save_best_each_gen", config.SAVE_BEST_EACH_GEN), action=argparse.BooleanOptionalAction)
     add_arg(parser, "graceful_stop", defaults.get("graceful_stop", config.GRACEFUL_STOP), action=argparse.BooleanOptionalAction)
     add_arg(parser, "gate_coeff_optimization", defaults.get("gate_coeff_optimization", config.GATE_COEFF_OPTIMIZATION), action=argparse.BooleanOptionalAction)
@@ -133,6 +138,7 @@ def run_policy_episodes(tree, episodes, duration, seed, collect_memory=False, re
     memory = ReplayMemory(config.REPLAY_MEMORY_SIZE) if collect_memory else None
     episode_rewards = []
     episode_lengths = []
+    episode_crashed = []
     crashed_episodes = 0
     survived_episodes = 0
     terminated_episodes = 0
@@ -177,6 +183,7 @@ def run_policy_episodes(tree, episodes, duration, seed, collect_memory=False, re
         truncated_episodes += int(truncated)
         episode_rewards.append(total_reward)
         episode_lengths.append(steps)
+        episode_crashed.append(bool(crashed))
 
     total_episodes = len(episode_rewards)
     reward_std = float(np.std(episode_rewards)) if episode_rewards else 0.0
@@ -186,6 +193,7 @@ def run_policy_episodes(tree, episodes, duration, seed, collect_memory=False, re
         "std_score": reward_std,
         "episode_scores": episode_rewards,
         "episode_lengths": episode_lengths,
+        "episode_crashed": episode_crashed,
         "total_episodes": total_episodes,
         "survived_episodes": survived_episodes,
         "crashed_episodes": crashed_episodes,
@@ -564,6 +572,12 @@ class ExperimentEvolution(Evolution):
         self._write_best_files(0, latest_tree=best)
 
     def _perform_generation(self):
+        if self.run_args and self.run_args.tournament_size_start != self.run_args.tournament_size:
+            progress = self.num_gens / max(1, self.max_gens - 1)
+            t = self.run_args.tournament_size_start + progress * (self.run_args.tournament_size - self.run_args.tournament_size_start)
+            divisors = [d for d in range(1, self.pop_size + 1) if self.pop_size % d == 0]
+            self.selection["kwargs"]["tournament_size"] = min(divisors, key=lambda d: abs(d - t))
+
         sel_fun = self.selection["fun"]
         parents = sel_fun(self.population, self.pop_size, **self.selection["kwargs"])
         offspring_population = Parallel(n_jobs=self.n_jobs)(
@@ -718,6 +732,7 @@ def run_training(args, run_dir):
         max_tree_size=args.max_tree_size,
         n_jobs=args.n_jobs,
         verbose=args.verbose,
+        selection={"fun": tournament_selection, "kwargs": {"tournament_size": args.tournament_size_start}},
         run_args=args,
         run_dir=run_dir,
     )
@@ -1068,8 +1083,40 @@ def save_training_outputs(args, run_dir, raw_best, best, evo, coeff_loss, coeff_
             f.write(f"Best GIF: {video_info['optimized_gif']['path']}\n")
 
 
+def run_retest(args):
+    if not args.retest_dir:
+        raise SystemExit("--retest-dir is required for --mode retest")
+    run_dir = Path(args.retest_dir)
+    pkl_path = run_dir / "best_tree.pkl"
+    if not pkl_path.exists():
+        raise SystemExit(f"No best_tree.pkl found in {run_dir}")
+    with open(pkl_path, "rb") as f:
+        best = pickle.load(f)
+    print(f"Re-running final test on {run_dir.name} ({args.test_episodes} episodes)...")
+    evaluation = evaluate_tree(best, episodes=args.test_episodes, duration=args.test_duration, seed=args.seed + 10_000)
+    metrics_path = run_dir / "metrics.json"
+    if metrics_path.exists():
+        with open(metrics_path) as f:
+            metrics = json.load(f)
+    else:
+        metrics = {}
+    metrics["test"] = evaluation
+    write_json(metrics_path, metrics)
+    print(f"Test total score: {evaluation['total_score']:.2f}  (survival rate: {evaluation['survival_rate']:.0%})")
+    if args.plots:
+        print("Regenerating plots...")
+        from plot_run import generate_plots
+        generate_plots(run_dir.name)
+
+
 def main():
     args = parse_args()
+
+    if args.mode == "retest":
+        run_retest(args)
+        env.close()
+        return
+
     run_dir = make_run_dir(args)
     write_json(run_dir / "requested_config.json", args_to_dict(args))
 
