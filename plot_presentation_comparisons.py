@@ -333,6 +333,70 @@ def plot_same_episodes(
     save(fig, out, "05_same_20_random_episode_scores.png", dpi)
 
 
+def plot_coefficient_gate_by_checkpoint(improved: RunData, out: Path, dpi: int) -> None:
+    rows = []
+    for artifact in improved.metrics.get("generation_artifacts", []):
+        gate = artifact.get("coefficient_gate") or {}
+        if "kept_optimized" not in gate:
+            continue
+        rows.append(
+            {
+                "generation": artifact.get("generation"),
+                "kept_optimized": bool(gate["kept_optimized"]),
+                "raw_score": gate.get("raw_score"),
+                "optimized_score": gate.get("optimized_score"),
+                "delta": gate.get("optimized_score") - gate.get("raw_score"),
+            }
+        )
+
+    if not rows:
+        return
+
+    gate_df = pd.DataFrame(rows).sort_values("generation")
+    gate_df.to_csv(out / "coefficient_gate_by_checkpoint.csv", index=False)
+
+    fig, ax = plt.subplots(figsize=(13.5, 6.2))
+    x = np.arange(len(gate_df))
+    width = 0.38
+    optimized_colors = np.where(gate_df["kept_optimized"], IMPROVED_SURVIVED, IMPROVED_CRASHED)
+
+    ax.bar(
+        x - width / 2,
+        gate_df["raw_score"],
+        width,
+        color="#9ca3af",
+        edgecolor="white",
+        linewidth=0.5,
+        label="raw tree",
+    )
+    ax.bar(
+        x + width / 2,
+        gate_df["optimized_score"],
+        width,
+        color=optimized_colors,
+        edgecolor="white",
+        linewidth=0.5,
+        label="optimized candidate",
+    )
+
+    ax.axhline(0, color="#111827", linewidth=1)
+    ax.set_xticks(x)
+    ax.set_xticklabels(gate_df["generation"].astype(int), rotation=0)
+    style_axes(
+        ax,
+        f"Coefficient Gate: Raw vs Optimized at Checkpoints ({improved.label})",
+        xlabel="Checkpoint generation",
+        ylabel="Gate validation score",
+    )
+    handles = [
+        plt.Rectangle((0, 0), 1, 1, color="#9ca3af", label="raw tree"),
+        plt.Rectangle((0, 0), 1, 1, color=IMPROVED_SURVIVED, label="optimized kept"),
+        plt.Rectangle((0, 0), 1, 1, color=IMPROVED_CRASHED, label="optimized rejected"),
+    ]
+    ax.legend(handles=handles, frameon=False, ncol=3, loc="upper left")
+    save(fig, out, "06_coefficient_gate_raw_vs_optimized.png", dpi)
+
+
 def write_summary(baseline: RunData, improved: RunData, out: Path) -> None:
     rows = []
     for run in [baseline, improved]:
@@ -410,6 +474,7 @@ def main() -> None:
         args.same_episode_seed,
         args.same_episode_duration,
     )
+    plot_coefficient_gate_by_checkpoint(improved, out, args.dpi)
 
     print(f"\nComparison plots written to {out}")
     print("Coefficient gating: remind me in the next question and I will explain it cleanly.")
