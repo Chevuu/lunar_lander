@@ -23,7 +23,7 @@
   "num_constants": 2,
   "num_episodes": 20,
   "parsimony": true,
-  "parsimony_weight": 0.001,
+  "parsimony_weight": 0.02,
   "plots": true,
   "pop_size": 128,
   "random_seeds": true,

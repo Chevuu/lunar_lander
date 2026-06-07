@@ -12,4 +12,4 @@ Test score std: 106.067
 Test survival rate: 0.867
 Test crash rate: 0.133
 Generation artifacts: 20 checkpoints
-Best GIF: experiment_runs/20260605_001126_final_val4_s1/best_lander.gif
+Best GIF: best_model_run/best_lander.gif
