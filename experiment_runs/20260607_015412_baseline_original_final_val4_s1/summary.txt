@@ -1,0 +1,14 @@
+Experiment: baseline_original_final_val4_s1
+Seed: 1
+Interrupted: False
+Best model source: training
+Best model generation: 183
+Best training fitness: 2907.891
+Best model saved after coefficient optimization: True
+Test total score: 1729.973
+Test mean score: 57.666
+Test score std: 148.328
+Test survival rate: 0.367
+Test crash rate: 0.633
+Generation artifacts: 20 checkpoints
+Best GIF: experiment_runs/20260607_015412_baseline_original_final_val4_s1/best_lander.gif
