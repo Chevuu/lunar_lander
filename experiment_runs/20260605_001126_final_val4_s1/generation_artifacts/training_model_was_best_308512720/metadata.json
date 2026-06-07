@@ -1,0 +1,14 @@
+{
+  "artifacts_dir": "/Users/vukjurisic/Work/Uni/EvolutionaryAlgorithms/lunar_lander/experiment_runs/20260605_001126_final_val4_s1/generation_artifacts",
+  "best_generation": "",
+  "best_model_label": "best_training",
+  "best_reward": 269.1414191767176,
+  "duration": 500,
+  "episode_seed": 308512720,
+  "frame_stride": 4,
+  "gifs_saved": true,
+  "models_completed": 22,
+  "models_found": 22,
+  "output_dir": "/Users/vukjurisic/Work/Uni/EvolutionaryAlgorithms/lunar_lander/experiment_runs/20260605_001126_final_val4_s1/generation_artifacts/same_episode_comparison_seed_308512720",
+  "resize": 0.75
+}

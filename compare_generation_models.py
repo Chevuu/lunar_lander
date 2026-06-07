@@ -74,20 +74,25 @@ def find_models(artifacts_dir):
         for path in generation_models
     ]
 
-    best_training_path = artifacts_dir.parent / "checkpoints" / "best_training_tree.pkl"
-    if best_training_path.exists():
-        models.append(
-            {
-                "label": "best_training",
-                "generation": "",
-                "path": best_training_path,
-            }
-        )
+    checkpoints_dir = artifacts_dir.parent / "checkpoints"
+    for label, filename in [
+        ("best_training", "best_training_tree.pkl"),
+        ("best_validation", "best_validation_tree.pkl"),
+    ]:
+        checkpoint_path = checkpoints_dir / filename
+        if checkpoint_path.exists():
+            models.append(
+                {
+                    "label": label,
+                    "generation": "",
+                    "path": checkpoint_path,
+                }
+            )
 
     if not models:
         raise SystemExit(
             f"No generation_*_tree.pkl files found in {artifacts_dir} "
-            "and no ../checkpoints/best_training_tree.pkl found."
+            "and no compatible ../checkpoints/*.pkl files found."
         )
     return models
 

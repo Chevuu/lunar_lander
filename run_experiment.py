@@ -20,7 +20,7 @@ from joblib.parallel import Parallel, delayed
 import config
 import sweep_config
 from genepro.evo import Evolution, generate_offspring, generate_random_multitree
-from genepro.node_impl import Constant, Feature
+from genepro.node_impl import Constant, Div, Feature, Minus, Plus, Times
 from genepro.selection import tournament_selection
 from train import ReplayMemory, Transition, env, num_features, set_seed
 
@@ -82,6 +82,8 @@ def parse_args():
     add_arg(parser, "video_seed_offset", defaults.get("video_seed_offset", config.VIDEO_SEED_OFFSET), type=int)
     add_arg(parser, "artifact_interval", defaults.get("artifact_interval", config.ARTIFACT_INTERVAL), type=int)
 
+    add_arg(parser, "baseline_original", defaults.get("baseline_original", False), action=argparse.BooleanOptionalAction)
+    add_arg(parser, "elitism", defaults.get("elitism", True), action=argparse.BooleanOptionalAction)
     add_arg(parser, "random_seeds", defaults.get("random_seeds", config.RANDOM_SEEDS), action=argparse.BooleanOptionalAction)
     add_arg(parser, "seed_stride", defaults.get("seed_stride", config.SEED_STRIDE), type=int)
     add_arg(parser, "crash_penalty", defaults.get("crash_penalty", config.CRASH_PENALTY), action=argparse.BooleanOptionalAction)
@@ -112,6 +114,22 @@ def parse_args():
     add_arg(parser, "sweep_episodes", defaults.get("sweep_episodes", sweep_config.SWEEP_EPISODES), type=int)
     add_arg(parser, "resume_sweep", defaults.get("resume_sweep", False), action=argparse.BooleanOptionalAction)
     return parser.parse_args()
+
+
+def apply_original_baseline(args):
+    if not args.baseline_original:
+        args.function_nodes = "configured"
+        return args
+
+    args.elitism = False
+    args.validation_selection = False
+    args.gate_coeff_optimization = False
+    args.crash_penalty = False
+    args.parsimony = False
+    args.time_pressure = False
+    args.random_seeds = True
+    args.function_nodes = "original_plus_minus_times_div"
+    return args
 
 
 def make_run_dir(args):
@@ -277,6 +295,12 @@ def build_leaf_nodes(num_constants):
     leaf_nodes = [Feature(i) for i in range(num_features)]
     leaf_nodes += [Constant() for _ in range(num_constants)]
     return leaf_nodes
+
+
+def build_internal_nodes(args):
+    if getattr(args, "baseline_original", False):
+        return [Plus(), Minus(), Times(), Div()]
+    return config.INTERNAL_NODES
 
 
 def merge_memories(memories):
@@ -563,7 +587,8 @@ class ExperimentEvolution(Evolution):
         self.num_evals += self.pop_size
         best = self.population[np.argmax([t.fitness for t in self.population])]
         self.best_of_gens.append(copy.deepcopy(best))
-        self.elite = copy.deepcopy(best)
+        if self.run_args is not None and self.run_args.elitism:
+            self.elite = copy.deepcopy(best)
         self._update_best_training(best, generation=0)
         record = summarize_population(0, self.population, self.best_training.fitness)
         self._validate_generation(0, self.population, record)
@@ -609,7 +634,7 @@ class ExperimentEvolution(Evolution):
         self._append_csv_row(record)
         self._write_best_files(self.num_gens, latest_tree=generation_best)
 
-        if self.elite is not None:
+        if self.run_args is not None and self.run_args.elitism and self.elite is not None:
             elite_candidate = copy.deepcopy(self.elite)
             if config.RANDOM_SEEDS:
                 elite_candidate.fitness, _, elite_candidate._episode_stats = self.fitness_function(
@@ -620,7 +645,8 @@ class ExperimentEvolution(Evolution):
 
         self.population = offspring_population
         best = self.population[np.argmax([t.fitness for t in self.population])]
-        self.elite = copy.deepcopy(best)
+        if self.run_args is not None and self.run_args.elitism:
+            self.elite = copy.deepcopy(best)
 
         if self.run_args and self.run_args.artifact_interval > 0 and self.num_gens % self.run_args.artifact_interval == 0:
             self._write_checkpoint(self.num_gens)
@@ -719,12 +745,13 @@ def optimize_with_optional_gate(raw_tree, memory, args, gate_seed=None):
 def run_training(args, run_dir):
     update_runtime_config(args)
     set_seed(args.seed)
+    internal_nodes = build_internal_nodes(args)
     leaf_nodes = build_leaf_nodes(args.num_constants)
     fitness_fn = make_fitness_fn(args.num_episodes, args.episode_duration, args.seed)
 
     evo = ExperimentEvolution(
         fitness_fn,
-        config.INTERNAL_NODES,
+        internal_nodes,
         leaf_nodes,
         config.NUM_TREES,
         pop_size=args.pop_size,
@@ -1117,6 +1144,7 @@ def main():
         env.close()
         return
 
+    args = apply_original_baseline(args)
     run_dir = make_run_dir(args)
     write_json(run_dir / "requested_config.json", args_to_dict(args))
 
